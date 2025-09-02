@@ -9,7 +9,13 @@ Feito e validado para uso com o Linux Mint, porém deve funcionar com Ubuntu e d
 Execute:
 
 ```bash
-./instalar
+sudo mkdir -p /opt/config-desktop
+wget -O /tmp/area-de-trabalho.zip https://github.com/mateusfmello/area-de-trabalho/archive/refs/heads/main.zip
+sudo unzip /tmp/area-de-trabalho.zip -d /tmp
+sudo mv /tmp/area-de-trabalho-main/* /opt/config-desktop
+sudo mv /tmp/area-de-trabalho-main/.* /opt/config-desktop
+sudo rm -rf /tmp/area-de-trabalho-main /tmp/area-de-trabalho.zip
+sudo /opt/config-desktop/instalar
 ```
 
 ## +
