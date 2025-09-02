@@ -1,0 +1,113 @@
+#!/bin/bash
+# Atualiza o Winbox
+
+# Globais:
+# ========== Configurações ==========
+DOWNLOAD_PAGE="https://mikrotik.com/download"
+DEST_DIR="/opt/winbox"
+DEST_BIN="$DEST_DIR/WinBox"
+DEST_IMG="$DEST_DIR/winbox.png"
+VERSION_FILE="$DEST_DIR/version.txt"
+URL=""
+TMP_ZIP=""
+
+criaDiretorioInstalacao() {
+	# Garante que o diretório de instalação exista e esteja no dono correto
+	sudo mkdir -p "$DEST_DIR"
+	sudo chown -R "$(id -u):$(id -g)" "$DEST_DIR"
+}
+
+recuperaURLWinbox() {
+	local HTML
+	# 1) Baixa o HTML da página oficial
+	echo "Buscando página de download em $DOWNLOAD_PAGE …"
+	HTML=$(curl -s "$DOWNLOAD_PAGE")
+
+	# 2) Extrai a URL do ZIP Linux (64‑bit)
+	URL=$(printf "%s\n" "$HTML" \
+	  | grep -A1 'Linux (64-bit)' \
+	  | grep -oP 'href="\K[^"]+' \
+	  | head -n1)
+
+	if [[ -z "$URL" ]]; then
+		echo "ERRO: não consegui extrair a URL do WinBox Linux." >&2
+		exit 1
+	fi
+	echo "URL encontrada: $URL"
+}
+
+verificaVersaoAtual() {
+	# 3) Verifica se já está na última versão
+	if [[ -f "$VERSION_FILE" ]] && grep -qx "$URL" "$VERSION_FILE"; then
+		echo "Já está na versão mais recente. Saindo."
+		exit 0
+	fi
+}
+
+alertaDaReinicializacao() {
+	local REINICIAR
+
+	read -rp "As instâncias do WinBox será ENCERRADA, deseja continuar? [S/n] " REINICIAR
+
+	if [[ $REINICIAR != "S" && $REINICIAR != "s" ]]; then
+		exit 0
+	fi
+}
+
+encerrarInstanciasAbertas() {
+	# 4) Mata processos antigos (se houver)
+	echo "Encerrando instâncias antigas…"
+	sudo pkill -f "$DEST_BIN" || true
+}
+
+baixandoWinbox() {
+	# 5) Baixa o ZIP
+	TMP_ZIP=$(mktemp --suffix=.zip)
+	echo "Baixando ZIP de $URL …"
+	if ! curl -L "$URL" -o "$TMP_ZIP"; then
+		echo "ERRO no download." >&2
+		sudo rm -f "$TMP_ZIP"
+		exit 1
+	fi
+}
+
+validaTamanhoArquivoBaixado() {
+	# 6) Validação mínima de tamanho
+	if [[ $(stat -c%s "$TMP_ZIP") -lt 100000 ]]; then
+		echo "ERRO: ZIP muito pequeno, possivelmente corrompido." >&2
+		sudo rm -f "$TMP_ZIP"
+		exit 1
+	fi
+}
+
+instalarNovaVersao() {
+	# 7) Extrai apenas o binário e a imagem
+	echo "Extraindo WinBox e winbox.png para $DEST_DIR …"
+	unzip -p "$TMP_ZIP" WinBox               > "$DEST_BIN" || { echo "Falha ao extrair WinBox"; sudo rm -f "$TMP_ZIP"; exit 1; }
+	unzip -p "$TMP_ZIP" assets/img/winbox.png > "$DEST_IMG" || { echo "Falha ao extrair winbox.png"; sudo rm -f "$TMP_ZIP"; exit 1; }
+
+	# 8) Ajusta permissões e remove o ZIP temporário
+	sudo chmod +x "$DEST_BIN"
+	sudo rm -f "$TMP_ZIP"
+
+	# 9) Registra a URL como “versão”
+	echo "$URL" > "$VERSION_FILE"
+}
+
+main() {
+
+	criaDiretorioInstalacao
+	recuperaURLWinbox
+	verificaVersaoAtual
+	alertaDaReinicializacao
+	encerrarInstanciasAbertas
+	baixandoWinbox
+	validaTamanhoArquivoBaixado
+	instalarNovaVersao
+
+	echo "Atualização concluída!"
+	echo "  Binário: $DEST_BIN"
+	echo "  Ícone:   $DEST_IMG"
+}
+
+main "$@";

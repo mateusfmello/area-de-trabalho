@@ -1,0 +1,61 @@
+#!/bin/bash
+
+# Propósito: instalar dependências e scripts
+# Uso: sudo ./instalar
+
+## Checa privilégios (executar como root ou via sudo)
+if [[ $EUID -ne 0 ]]; then
+	echo "Este script precisa ser executado como root."
+	echo "Execute:"
+	echo "sudo $0"
+	exit 1
+fi
+
+source "$(realpath $(dirname $0))/utilitarios/logs"
+
+read -r -s -p "Informe a senha sudo do usuário para o Ansible: " SENHA_SUDO
+echo
+read -r -s -p "Informe novamente: " REPETE_SENHA_SUDO
+echo
+
+if [[ "$REPETE_SENHA_SUDO" != "$SENHA_SUDO" ]]; then
+
+	SENHA_SUDO=""
+	REPETE_SENHA_SUDO=""
+	unset SENHA_SUDO
+	unset REPETE_SENHA_SUDO
+
+	erro "Senhas não conferem!!!"
+	exit 1
+fi
+
+#"$(realpath $(dirname $0))/atualizacoes/atualizar"
+
+apt update -y
+
+info "Instalando pré-requisitos..."
+rodarComando apt install -y software-properties-common
+
+info "Adicionando PPA do próprio ansible"
+rodarComando add-apt-repository --yes ppa:ansible/ansible
+
+info "Atualizando pacotes"
+rodarComando apt update -y
+
+info "Instalando Ansible"
+rodarComando apt install -y ansible
+
+info "Verificando instalação do Ansible..."
+if command -v ansible >/dev/null 2>&1; then
+	sucesso "Ansible instalado com sucesso"
+else
+	erro "'ansible' não encontrado após instalação. Revise os passos anteriores." >&2
+	exit 2
+fi
+
+info "Instalando dependências com Ansible"
+printf '{"ansible_become_pass":"%s"}\n' "$SENHA_SUDO" | \
+  ansible-playbook ./desktop.yml --extra-vars -
+
+SENHA_SUDO=""
+unset SENHA_SUDO

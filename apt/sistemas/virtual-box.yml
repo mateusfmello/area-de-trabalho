@@ -1,0 +1,117 @@
+---
+- name: Instalar VirtualBox
+  hosts: localhost
+  become: yes
+  gather_facts: yes
+
+  vars:
+      vbox_key_url: "https://www.virtualbox.org/download/oracle_vbox_2016.asc"
+      vbox_keyring: "/usr/share/keyrings/oracle-virtualbox-2016.gpg"
+      vbox_repo: "deb [arch={{ arquitetura_computador.stout }} signed-by={{ vbox_keyring }}] https://download.virtualbox.org/virtualbox/debian {{ ubuntu_codename.stdout }} contrib"
+      vbox_repo_filename: "virtualbox.list"
+      vbox_packages:
+          - virtualbox
+      extpack_filename: "Oracle_VM_VirtualBox_Extension_Pack-{{ vbox_version }}.vbox-extpack"
+      vbox_extpack_url: "https://download.virtualbox.org/virtualbox/{{ vbox_version }}/{{ extpack_filename }}"
+
+  tasks:
+      - name: Ler UBUNTU_CODENAME do /etc/os-release
+        ansible.builtin.shell: ". /etc/os-release && echo $UBUNTU_CODENAME"
+        register: ubuntu_codename
+        changed_when: false
+
+      -   name: Pegando arquitetura
+          ansible.builtin.command: dpkg --print-architecture
+          register: arquitetura_computador
+
+      - name: Garantir pacotes básicos necessários (ca-certificates, gnupg, wget)
+        ansible.builtin.apt:
+            name:
+                - ca-certificates
+                - gnupg
+                - wget
+            state: present
+            update_cache: yes
+
+      - name: Garantir diretório /usr/share/keyrings existe
+        ansible.builtin.file:
+            path: /usr/share/keyrings
+            state: directory
+            owner: root
+            group: root
+            mode: '0755'
+
+      - name: Adicionar chave do VirtualBox ao keyring (dearmor) usando apt_key
+        ansible.builtin.apt_key:
+            url: "{{ vbox_key_url }}"
+            keyring: "{{ vbox_keyring }}"
+            state: present
+
+      - name: Ajustar permissões do arquivo do keyring
+        ansible.builtin.file:
+            path: "{{ vbox_keyring }}"
+            owner: root
+            group: root
+            mode: '0644'
+        when: ansible_facts['os_family'] is defined  # garante execução no sistema linux
+
+      - name: Adicionar repositório do VirtualBox em /etc/apt/sources.list.d/{{ vbox_repo_filename }}
+        ansible.builtin.apt_repository:
+            repo: "{{ vbox_repo }}"
+            filename: "{{ vbox_repo_filename }}"
+            state: present
+            update_cache: yes
+
+      - name: Instalar VirtualBox
+        ansible.builtin.apt:
+            name: "{{ vbox_packages }}"
+            state: present
+
+      - name: Obter versão instalada do VirtualBox
+        ansible.builtin.command: "vboxmanage --version"
+        register: vbox_version_cmd
+        changed_when: false
+
+      - name: Extrair versão principal
+        ansible.builtin.set_fact:
+            vbox_version: "{{ (vbox_version_cmd.stdout | regex_replace('^([0-9\\.]+)_.*', '\\1')) }}"
+
+      -   name: Gera diretório temporário
+          ansible.builtin.tempfile:
+              state: directory
+              prefix: "tmp."
+          register: tmp_dir
+
+      -   name: Baixar Extension Pack
+          ansible.builtin.get_url:
+              url: "{{ vbox_extpack_url }}"
+              dest: "{{ tmp_dir.path }}"
+              mode: '0644'
+              force: no
+          register: extpack
+
+      - name: Ajustar permissões do arquivo do keyring
+        ansible.builtin.file:
+            path: "{{ tmp_dir.path }}"
+            owner: root
+            group: root
+            mode: '0644'
+            recurse: true
+
+      -   name: Extraindo arquivos
+          ansible.builtin.unarchive:
+              remote_src: true
+              src: "{{ extpack.dest }}"
+              dest: "{{ tmp_dir.path }}"
+
+      -   name: Gerando hash de aceite
+          ansible.builtin.command: sha256sum {{ tmp_dir.path }}/ExtPack-license.txt
+          register: hash_aceite
+
+      -   name: Instalar Extension Pack
+          ansible.builtin.command: "vboxmanage extpack install --replace --accept-license={{ hash_aceite.stdout.split()[0] }} {{ extpack.dest }}"
+
+      -   name: Deletando diretório temporário
+          ansible.builtin.file:
+              path: "{{ tmp_dir.path }}"
+              state: "absent"

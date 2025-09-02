@@ -1,0 +1,30 @@
+---
+-   name: Instalação de ferramentas
+    gather_facts: no
+    become: true
+
+    tasks:
+        -   name: Instalando JQ
+            ansible.builtin.apt:
+                name: js
+                state: present
+
+        -   name: Instalando WGET
+            ansible.builtin.apt:
+                name: wget
+                state: present
+
+        -   name: Instalando Curl
+            ansible.builtin.apt:
+                name: curl
+                state: present
+
+        -   name: Instalando HTOP
+            ansible.builtin.apt:
+                name: htop
+                state: present
+
+        -   name: Instalando Nano
+            ansible.builtin.apt:
+                name: nano
+                state: present

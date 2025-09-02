@@ -1,0 +1,17 @@
+---
+-   name: Instalação do Spotify
+    gather_facts: no
+    become: true
+
+    tasks:
+        -   name: Adicionando chaves
+            ansible.builtin.command: curl -sS https://download.spotify.com/debian/pubkey_C85668DF69375001.gpg | sudo gpg --dearmor --yes -o /etc/apt/trusted.gpg.d/spotify.gpg
+
+        -   name: Adicionando repositório
+            ansible.builtin.command: echo "deb https://repository.spotify.com stable non-free" | sudo tee /etc/apt/sources.list.d/spotify.list
+
+        -   name: Instalando Spotify
+            ansible.builtin.apt:
+                name: spotify-client
+                state: present
+                update_cache: yes

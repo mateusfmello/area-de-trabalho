@@ -1,0 +1,10 @@
+---
+-   name: Instalando Discord
+    hosts: localhost
+    become: true
+    gather_facts: no
+
+    tasks:
+        -   name: Efetuando a instalação
+            ansible.builtin.apt:
+                deb: https://discord.com/api/download?platform=linux&format=deb

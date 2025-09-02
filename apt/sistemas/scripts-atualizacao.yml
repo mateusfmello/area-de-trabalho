@@ -1,0 +1,37 @@
+---
+- name: Adicionar /opt/config-desktop ao PATH para todos usuários
+  hosts: localhost
+  become: true
+  vars:
+      path_dir: "/opt/config-desktop"
+      profile_script: "/etc/profile.d/config-desktop.sh"
+
+  tasks:
+      - name: Garantir que {{ path_dir }} exista
+        ansible.builtin.file:
+            path: "{{ path_dir }}"
+            state: directory
+            owner: root
+            group: root
+            mode: "0755"
+
+      - name: Criar script em /etc/profile.d para adicionar {{ path_dir }} ao PATH
+        ansible.builtin.copy:
+            dest: "{{ profile_script }}"
+            owner: root
+            group: root
+            mode: "0755"
+            content: |
+                #!/bin/sh
+                # Script criado pelo Ansible - adiciona /opt/config-desktop ao PATH se existir
+                if [ -d "{{ path_dir }}" ]; then
+                  case ":$PATH:" in
+                    *":{{ path_dir }}:"*) 
+                      # já está no PATH, não faz nada
+                      ;;
+                    *)
+                      PATH="{{ path_dir }}:$PATH"
+                      export PATH
+                      ;;
+                  esac
+                fi

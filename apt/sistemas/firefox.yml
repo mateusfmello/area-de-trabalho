@@ -1,0 +1,27 @@
+---
+-   name: Instalação do Firefox
+    gather_facts: no
+    become: true
+
+    tasks:
+        -   name: Extraindo Firefox
+            ansible.builtin.unarchive:
+                remote_src: yes
+                src: https://download.mozilla.org/?product=firefox-devedition-latest-ssl&os=linux64&lang=pt-BR
+                dest: /opt/firefox-developer/
+
+        -   name: Disponibilizando binário do Firefox para usuários
+            ansible.builtin.file:
+                src: /opt/firefox-developer/firefox
+                dest: /usr/local/bin/firefox-developer
+                owner: nobody
+                group: nogroup
+                state: link
+
+        -   name: Adicionando Firefox nas aplicações
+            ansible.builtin.file:
+                src: ../../configuracoes/firefox-developer.desktop
+                dest: /usr/share/applications/firefox-developer.desktop
+                owner: nobody
+                group: nogroup
+                state: link

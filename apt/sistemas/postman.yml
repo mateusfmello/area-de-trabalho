@@ -1,0 +1,97 @@
+---
+-    name: Instalar Postman
+     hosts: localhost
+     become: true
+     vars:
+         diretorio_instalacao: /opt/Postman
+
+     tasks:
+         -   name: Verificar se package.json existe
+             ansible.builtin.stat:
+                 path: "{{ diretorio_instalacao }}/app/resources/app/package.json"
+             register: arquivo_versao
+
+         -   name: Ler package.json da versão atual se existir
+             ansible.builtin.set_fact:
+                 dados: "{{ lookup('file', '{{ diretorio_instalacao }}/app/resources/app/package.json') | from_json }}"
+             when: arquivo_versao.stat.exists
+
+         -   name: Gera diretório temporário
+             ansible.builtin.tempfile:
+                 state: directory
+                 prefix: "tmp."
+             register: tmp_dir
+
+         -    name: Baixar Postman
+              ansible.builtin.get_url:
+                  url: "https://dl.pstmn.io/download/latest/linux_64"
+                  dest: "{{ tmp_dir.path }}"
+                  mode: '0655'
+              register: arquivo_baixado
+
+         -    name: Extrair Postman
+              ansible.builtin.unarchive:
+                  src: "{{ arquivo_baixado.dest }}"
+                  dest: "{{ tmp_dir.path }}"
+                  remote_src: true
+
+         -   name: Ajustar permissões do diretório extraído para leitura pelo usuário atual
+             ansible.builtin.file:
+                 path: "{{ tmp_dir.path }}"
+                 recurse: false
+                 mode: '0755'
+
+         -   name: Ler package.json da versão baixada
+             ansible.builtin.set_fact:
+                 dados_nova_versao: "{{ lookup('file', '{{ tmp_dir.path }}/Postman/app/resources/app/package.json') | from_json }}"
+
+         -   name: Deletando diretório temporário
+             ansible.builtin.file:
+                 path: "{{ tmp_dir.path }}"
+                 state: "absent"
+             when: dados.version == dados_nova_versao.version
+
+         -   name: Abortar playbook se versão instalada for igual à mais recente
+             ansible.builtin.meta: end_play
+             when: dados.version == dados_nova_versao.version
+
+         -   name: Deletando diretório sistema atual
+             ansible.builtin.file:
+                 path: "{{ diretorio_instalacao }}"
+                 state: "absent"
+
+         -    name: Copiando sistema para local permanente
+              ansible.builtin.copy:
+                  src: "{{ tmp_dir.path }}/Postman/."
+                  dest: "{{ diretorio_instalacao }}"
+                  mode: '0655'
+                  remote_src: true
+
+         -    name: Verificar se o arquivo do ícone existe
+              ansible.builtin.stat:
+                  path: "{{ diretorio_instalacao }}/app/resources/app/assets/icon.png"
+              register: arquivo_icone
+
+         -   name: Falhar se o ícone não existir
+             ansible.builtin.fail:
+                 msg: "O ícone não foi encontrado!!!"
+             when: not arquivo_icone.stat.exists
+
+         -    name: Criando .desktop
+              ansible.builtin.copy:
+                  dest: /usr/share/applications/postman.desktop
+                  mode: '0777'
+                  content: |
+                      [Desktop Entry]
+                      Name=Postman
+                      Exec={{ diretorio_instalacao }}/app/Postman %u
+                      Terminal=false
+                      Type=Application
+                      Icon={{ arquivo_icone.stat.path }}
+                      Categories=Development;Network;
+                      StartupNotify=true
+
+         -    name: Deletando diretório temporário
+              ansible.builtin.file:
+                  path: "{{ tmp_dir.path }}"
+                  state: "absent"

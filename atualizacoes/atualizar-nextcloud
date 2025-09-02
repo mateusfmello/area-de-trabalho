@@ -1,0 +1,144 @@
+#!/bin/bash
+# Atualiza o Nextcloud
+
+# Globais:
+TIMEOUT_REINICIALIZACAO=15
+REPO="nextcloud-releases/desktop"
+ARQUIVO_TMP="/tmp/Nextcloud.AppImage"
+DEST="/opt/Nextcloud.AppImage"
+VERSION_FILE="/opt/Nextcloud.AppImage.version"
+URL=""
+REINICIAR="s"
+
+recuperaPID() {
+	pgrep -f "[N]extcloud.AppImage"
+}
+
+recuperaUltimaURL() {
+	# Obtém a URL do último release com AppImage x86_64
+	echo "Buscando a última versão do Nextcloud Desktop..."
+	URL=$(curl -s https://api.github.com/repos/$REPO/releases/latest |
+	  grep browser_download_url |
+	  grep AppImage\" |
+	  grep x86_64 |
+	  cut -d '"' -f 4)
+
+	# Verifica se a URL foi encontrada
+	if [[ -z "$URL" ]]; then
+		echo "Não foi possível encontrar a URL do AppImage mais recente."
+		exit 1
+	fi
+}
+
+verificaSePrecisaAtualizar() {
+	# Verifica se a última versão já está instalada
+	if [[ -f "$VERSION_FILE" ]]; then
+
+		local URL_ATUAL
+		URL_ATUAL=$(cat "$VERSION_FILE")
+
+		if [[ "$URL_ATUAL" == "$URL" ]]; then
+			echo "A versão mais recente já está instalada. Nenhuma ação necessária."
+			exit 0
+		fi
+	fi
+}
+
+verificaSeDeveReiniciar() {
+	read -rp "Você deseja reiniciar o Nextcloud? [S/n] " REINICIAR
+}
+
+encerrarNextcloud() {
+
+	if [[ $REINICIAR != "S" && $REINICIAR != "s" ]]; then
+	    return
+	fi
+
+	# Encerra o Nextcloud se estiver rodando
+	echo "Encerrando instância atual do Nextcloud, se existir..."
+
+	local PIDS
+	PIDS=$(recuperaPID)
+
+	if [ -n "$PIDS" ]; then
+		sudo kill -15 "$PIDS"
+	else
+		echo "Nextcloud não encontrado!"
+	fi
+}
+
+baixarNovoNextcloud() {
+	# Baixa o AppImage
+	echo "Baixando: $URL"
+	curl -L "$URL" -o $ARQUIVO_TMP
+}
+
+atualizarPermissoes() {
+	# Torna executável
+	sudo chmod +x "$ARQUIVO_TMP"
+	ls -lha "$ARQUIVO_TMP"
+}
+
+instalandoNextcloud() {
+
+	# Move para /opt (pode precisar de sudo)
+	echo "Movendo para $DEST"
+	sudo mv -vf "$ARQUIVO_TMP" "$DEST"
+
+	# Atualiza o arquivo de versão
+	echo "$URL" | sudo tee "$VERSION_FILE" > /dev/null
+}
+
+aguardarEncerramentoNextcloud() {
+
+	if [[ $REINICIAR != "S" && $REINICIAR != "s" ]]; then
+		return
+	fi
+
+	# Aguardando encerramento com timeout
+	local elapsed
+	elapsed=0
+
+	while [[ -n $(recuperaPID) ]]; do
+
+		if (( elapsed >= TIMEOUT_REINICIALIZACAO )); then
+			echo "Timeout atingido. Forçando encerramento..."
+			sudo kill -9 -f "$(recuperaPID)"
+			break
+		fi
+
+		echo "Nextcloud ainda está rodando, aguardando 1s..."
+		sleep 1
+
+		((elapsed++))
+	done
+}
+
+iniciandoNextcloud() {
+
+	if [[ $REINICIAR != "S" && $REINICIAR != "s" ]]; then
+		return
+	fi
+
+	# Reinicia o Nextcloud
+	echo "Iniciando o Nextcloud... (Aguardando 2 minutos)"
+	sleep 120
+	nohup "$DEST" >/dev/null 2>&1 &
+}
+
+function main() {
+
+	recuperaUltimaURL
+	verificaSePrecisaAtualizar
+	verificaSeDeveReiniciar
+	encerrarNextcloud
+	baixarNovoNextcloud
+	atualizarPermissoes
+	instalandoNextcloud
+	aguardarEncerramentoNextcloud
+	iniciandoNextcloud
+
+	echo "Feito! Nextcloud disponível em $DEST"
+}
+
+main "$@";

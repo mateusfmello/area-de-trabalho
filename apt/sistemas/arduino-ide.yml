@@ -1,0 +1,149 @@
+---
+-    name: Instando Arduino IDE
+     hosts: localhost
+     become: true
+     vars:
+         diretorio_instalacao: /opt/arduino-ide
+
+     tasks:
+         -   name: Verificar se versao.txt existe
+             ansible.builtin.stat:
+                 path: "{{ diretorio_instalacao }}/versao.txt"
+             register: arquivo_versao
+
+         -   name: Ler versao.txt se existir
+             ansible.builtin.slurp:
+                 src: "{{ diretorio_instalacao }}/versao.txt"
+             register: versao_local
+             when: arquivo_versao.stat.exists
+
+         -    name: Recuperando JSON da IDE
+              ansible.builtin.uri:
+                  url: "https://api.github.com/repos/arduino/arduino-ide/releases/latest"
+                  method: GET
+                  return_content: yes
+              register: respostaJson
+              failed_when: respostaJson.status != 200
+
+#         -   name: Abortar playbook se versão instalada for igual à mais recente
+#             ansible.builtin.meta: end_play
+#             when: arquivo_versao.stat.exists and (versao_local.content | b64decode | trim) == respostaJson.json.tag_name
+
+         -    name: Gera diretório temporário
+              ansible.builtin.command: mktemp -d
+              register: tmp_dir
+
+         -    name: Garantir que software-properties-common exista (add-apt-repository)
+              ansible.builtin.apt:
+                  name: software-properties-common
+                  state: present
+                  update_cache: yes
+
+         -    name: Ler UBUNTU_CODENAME do /etc/os-release
+              ansible.builtin.shell: ". /etc/os-release && echo $UBUNTU_CODENAME"
+              register: ubuntu_codename
+              changed_when: false
+
+         -   name: Checar se o repositório universe já existe
+             ansible.builtin.shell: |
+                 grep -hEs "^deb .*archive.ubuntu.com/ubuntu .* universe" /etc/apt/sources.list /etc/apt/sources.list.d/*.list
+             register: verificando_existencia_repositorio
+             changed_when: false
+             failed_when: false
+
+         -   name: Habilitar repositório Universe
+             ansible.builtin.apt_repository:
+                 repo: "deb https://archive.ubuntu.com/ubuntu {{ ubuntu_codename.stdout }} universe"
+                 state: present
+             when: verificando_existencia_repositorio.rc != 0
+
+         -    name: Instalar libfuse2 (dependência)
+              ansible.builtin.apt:
+                  update_cache: yes
+                  name: libfuse2
+                  state: present
+
+         -    name: "Definir fact com a versão (tag_name)"
+              ansible.builtin.set_fact:
+                  arduino_latest: "{{ respostaJson.json.tag_name }}"
+
+         -    name: Criando diretório onde será instalado
+              ansible.builtin.file:
+                  path: "{{ diretorio_instalacao }}"
+                  state: directory
+                  mode: '0755'
+
+         -    name: Baixar Arduino IDE
+              ansible.builtin.get_url:
+                  url: "https://github.com/arduino/arduino-ide/releases/download/{{ arduino_latest }}/arduino-ide_{{ arduino_latest }}_Linux_64bit.AppImage"
+                  dest: "{{ tmp_dir.stdout }}"
+                  mode: '0777'
+              register: arquivo_baixado
+
+         -    name: Copiando AppImage para local permanente
+              ansible.builtin.copy:
+                  src: "{{ arquivo_baixado.dest }}"
+                  dest: "{{ diretorio_instalacao }}/arduino-ide.AppImage"
+                  mode: '0777'
+                  remote_src: true
+
+         -    name: Expandindo AppImage para pegar icone
+              ansible.builtin.command: "{{ arquivo_baixado.dest }} --appimage-extract"
+              args:
+                  chdir: "{{ tmp_dir.stdout }}"
+
+         -    name: Verificar se o arquivo do ícone existe
+              ansible.builtin.stat:
+                  path: "{{ tmp_dir.stdout }}/squashfs-root/resources/app/resources/icons/512x512.png"
+              register: arquivo_icone
+
+         -   name: Para se o ícone não existir
+             ansible.builtin.fail:
+                 msg: "O ícone não foi encontrado!!!"
+             when: not arquivo_icone.stat.exists
+
+         -    name: Copiando ícone para local permanente
+              ansible.builtin.copy:
+                  src: "{{ tmp_dir.stdout }}/squashfs-root/resources/app/resources/icons/512x512.png"
+                  dest: "{{ diretorio_instalacao }}/icone.png"
+                  mode: '0777'
+                  remote_src: true
+
+         -    name: Criando .desktop
+              ansible.builtin.copy:
+                  dest: /usr/share/applications/arduino-ide.desktop
+                  mode: '0777'
+                  content: |
+                      [Desktop Entry]
+                      Name=Arduino IDE
+                      Exec={{ diretorio_instalacao }}/arduino-ide.AppImage %u
+                      Terminal=false
+                      Type=Application
+                      Icon={{ diretorio_instalacao }}/icone.png
+                      Categories=Development;IDE;
+                      StartupNotify=true
+
+         -    name: Criando /etc/udev/rules.d/99-arduino.rules
+              ansible.builtin.copy:
+                  dest: /etc/udev/rules.d/99-arduino.rules
+                  mode: '0655'
+                  content: SUBSYSTEMS=="usb", ATTRS{idVendor}=="2341", GROUP="plugdev", MODE="0666"
+
+         -   name: Recarregar regras do udev
+             command: udevadm control --reload-rules
+             changed_when: false
+
+         -   name: Disparar regras do udev
+             command: udevadm trigger
+             changed_when: false
+
+         -   name: Criar/atualizar versao.txt com a versão instalada
+             ansible.builtin.copy:
+                 dest: "{{ diretorio_instalacao }}/versao.txt"
+                 content: "{{ respostaJson.json.tag_name }}"
+                 mode: '0655'
+
+         -    name: Deletando diretório temporário
+              ansible.builtin.file:
+                  path: "{{ tmp_dir.stdout }}"
+                  state: "absent"

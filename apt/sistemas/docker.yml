@@ -1,0 +1,71 @@
+---
+- name: Instalando Docker
+  hosts: localhost
+  become: true
+  gather_facts: yes
+
+  tasks:
+
+      - name: Instalar dependências básicas
+        ansible.builtin.apt:
+            name:
+                - ca-certificates
+                - curl
+            state: present
+            update_cache: yes
+
+      - name: Ler UBUNTU_CODENAME do /etc/os-release
+        ansible.builtin.shell: ". /etc/os-release && echo $UBUNTU_CODENAME"
+        register: ubuntu_codename
+        changed_when: false
+
+      - name: Criar diretório para keyrings
+        ansible.builtin.file:
+            path: /usr/share/keyrings
+            state: directory
+            mode: '0755'
+
+      - name: Baixar chave GPG
+        ansible.builtin.get_url:
+            url: https://download.docker.com/linux/ubuntu/gpg
+            dest: /etc/apt/keyrings/docker.asc
+            mode: '0644'
+            force: yes
+
+      - name: Corrige permissão arquivo .asc
+        ansible.builtin.file:
+            path: /etc/apt/keyrings/docker.asc
+            mode: '0644'
+
+      - name: Pegando arquitetura
+        ansible.builtin.command: dpkg --print-architecture
+        register: arquitetura_computador
+
+      - name: Adicionar repositório oficial do Docker
+        ansible.builtin.apt_repository:
+            filename: docker
+            repo: "deb [arch={{ arquitetura_computador.stdout }} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu {{ ubuntu_codename.stdout }} stable"
+            state: present
+
+      - name: Instalar Docker Engine e componentes recomendados
+        ansible.builtin.apt:
+            update_cache: yes
+            name:
+                - docker-ce
+                - docker-ce-cli
+                - containerd.io
+                - docker-buildx-plugin
+                - docker-compose-plugin
+            state: latest
+
+      - name: Garantir que o serviço docker esteja habilitado e iniciado
+        ansible.builtin.service:
+            name: docker
+            state: started
+            enabled: yes
+
+      - name: Adicionar usuários ao grupo docker
+        ansible.builtin.user:
+            name: "{{ ansible_env.SUDO_USER }}"
+            groups: docker
+            append: yes

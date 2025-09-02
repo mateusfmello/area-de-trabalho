@@ -1,0 +1,39 @@
+---
+- name: Instalando repositório de dicionário das IDEs
+  hosts: localhost
+  become: true
+
+  vars:
+      repo_url: "https://github.com/rafaelsc/IntelliJ.Portuguese.Brazil.Dictionary.git"
+      dest_dir: "/opt/dicionario-ides"
+
+  tasks:
+      - name: Garantir que o git esteja instalado
+        ansible.builtin.apt:
+            name: git
+            state: present
+
+      -   name: Deletando diretório {{ dest_dir }}
+          ansible.builtin.file:
+              path: "{{ dest_dir }}"
+              state: absent
+
+      - name: Clonar repositório do dicionário em {{ dest_dir }}
+        ansible.builtin.git:
+            repo: "{{ repo_url }}"
+            dest: "{{ dest_dir }}"
+            version: HEAD
+            update: yes
+            force: no
+            accept_hostkey: yes
+        register: git_result
+
+      - name: Ajustar permissões do diretório do dicionário
+        ansible.builtin.file:
+            path: "{{ dest_dir }}"
+            state: directory
+            recurse: yes
+            owner: root
+            group: root
+            mode: '0755'
+        when: git_result is changed

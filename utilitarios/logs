@@ -1,0 +1,58 @@
+#!/bin/bash
+
+VERMELHO="\e[31m"
+VERDE="\e[32m"
+AMARELO="\e[33m"
+AZUL="\e[34m"
+LARANJA="\e[38;5;202m"
+
+FIM_COR="\e[0m"
+
+SUFIXO_LOG=$(date +"%s")
+
+USUARIO=$(id -u)
+GRUPO=$(id -g)
+
+LOG="/var/log/atualizar_sistema-$SUFIXO_LOG.log"
+
+sudo touch "$LOG"
+sudo chown "$USUARIO:$GRUPO" "$LOG"
+
+: > "$LOG" 2>/dev/null || LOG="/tmp/atualizar_sistema-$SUFIXO_LOG.log"  # fallback se não tiver permissão
+
+tornarNegrito() {
+	echo $1 | sed 's/\\e\[/\\e\[1\;/';
+}
+
+msgComTag() {
+
+	INICIO=""
+
+	if [[ $1 != "" ]]; then
+		INICIO="$(tornarNegrito $1)"
+	fi
+
+	printf "$INICIO%s$FIM_COR$1 %s$FIM_COR\n" "[${2}]" "${@:3}" | tee -a "$LOG";
+}
+
+info(){ msgComTag "$AZUL" "INFO" "$*"; }
+aviso(){ msgComTag "$AMARELO" "AVISO" "$*"; }
+erro(){ msgComTag "$VERMELHO" "ERRO" "$*"; }
+sucesso(){ msgComTag "$VERDE" "OK" "$*"; }
+msg(){ msgComTag "" "MSG" "$*"; }
+
+rodarComando() {
+
+	printf "$(echo $LARANJA | sed 's/\\e\[/\\e\[1\;/') >>> $FIM_COR$LARANJA%s${FIM_COR}\n" "$*" | tee -a "$LOG"
+
+	if "$@"; then
+		sucesso "Sucesso ao rodar comando" | tee -a "$LOG"
+		return 0
+	else
+		local rc=$?
+		erro "$(printf " -> COMANDO FALHOU (exit %d)" "$rc")" | tee -a "$LOG"
+		return $rc
+	fi
+}
+
+info "Arquivo de log: $LOG"

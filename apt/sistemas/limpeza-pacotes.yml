@@ -1,0 +1,10 @@
+---
+-   name: Limpando pacotes
+    hosts: nos
+    gather_facts: no
+    become: true
+
+    tasks:
+        -   name: Rodando autoremove com o DNF
+            ansible.builtin.dnf:
+                autoremove: yes

@@ -1,0 +1,11 @@
+---
+-   name: Instalar OBS Studio via Flatpak
+    hosts: localhost
+    become: true
+
+    tasks:
+        -   name: Instalando OBS
+            community.general.flatpak:
+                name: com.obsproject.Studio
+                state: present
+                remote: flathub

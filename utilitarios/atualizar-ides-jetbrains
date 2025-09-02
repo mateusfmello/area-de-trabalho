@@ -1,0 +1,322 @@
+#!/bin/bash
+
+source "$(realpath $(dirname $0))/../utilitarios/logs"
+
+JSON=""
+DIRETORIO_TMP=""
+ARQUIVO_COMPACTADO=""
+DIRETORIO="/tmp/erro-na-atualizacao"
+ARQUIVO_VERSAO="$DIRETORIO/build.txt"
+ARQUIVO_CHECKSUM=""
+PULA_IDE=false
+
+CODIGO_IDES=()
+
+exibirModoUsar() {
+	cat <<EOF
+Uso: $0 [OPÇÕES]
+
+Opções:
+  --phpstorm    Atualiza PhpStorm
+  --goland       Atualiza GoLand
+  --webstorm     Atualiza WebStorm
+  --datagrip     Atualiza DataGrip
+  --idea     	 Atualiza Intellij IDEA
+  --pycharm      Atualiza PyCharm
+  --dicionarios  Atualiza dicionários de tradução
+  -h, --help     Mostra esta ajuda
+
+Se nenhuma opção for passada, o script atualizará todas IDEs.
+Exemplo: ./script --goland --pycharm
+EOF
+}
+
+processaParametros() {
+	if [ "$#" -eq 0 ]; then
+		CODIGO_IDES=('PCP' 'IIU' 'PS' 'GO' 'WS' 'DG' 'DICIONARIOS')
+	else
+		while [ "$#" -gt 0 ]; do
+			case "$1" in
+				--phpstorm)
+					CODIGO_IDES+=('PS')
+					shift
+					;;
+				--goland)
+					CODIGO_IDES+=('GO')
+					shift
+					;;
+				--webstorm)
+					CODIGO_IDES+=('WS')
+					shift
+					;;
+				--datagrip)
+					CODIGO_IDES+=('DG')
+					shift
+					;;
+				--idea)
+					CODIGO_IDES+=('IIU')
+					shift
+					;;
+				--pycharm)
+					CODIGO_IDES+=('PCP')
+					shift
+					;;
+				--dicionarios)
+					CODIGO_IDES+=('DICIONARIOS')
+					shift
+					;;
+				-h|--help)
+					exibirModoUsar
+					exit 0
+					;;
+				*)
+					echo "Opção desconhecida: $1" >&2
+					exibirModoUsar
+					exit 1
+					;;
+			esac
+		done
+	fi
+}
+
+getNomeIDE() {
+
+	case $1 in
+		'PCP')
+			echo 'PyCharm'
+			shift
+			;;
+		'IIU')
+			echo 'Intellij IDEA'
+			shift
+			;;
+		'PS')
+			echo 'PHP Storm'
+			shift
+			;;
+		'GO')
+			echo 'GoLand'
+			shift
+			;;
+		'WS')
+			echo 'WebStorm'
+			shift
+			;;
+		'DG')
+			echo 'DataGrip'
+			shift
+			;;
+		'DICIONARIOS')
+			echo 'Dicionários de tradução'
+			shift
+			;;
+		*)
+			erro "Código $1 é inválido!!!"
+			exit 1
+			;;
+	esac
+}
+
+setDiretorio() {
+
+	case "$1" in
+		PCP)
+			DIRETORIO='/opt/pycharm'
+			;;
+		IIU)
+			DIRETORIO='/opt/idea'
+			;;
+		PS)
+			DIRETORIO='/opt/phpstorm'
+			;;
+		GO)
+			DIRETORIO='/opt/goland'
+			;;
+		WS)
+			DIRETORIO='/opt/webstorm'
+			;;
+		DG)
+			DIRETORIO='/opt/datagrip'
+			;;
+		DICIONARIOS)
+			DIRETORIO='/opt/dicionario-ides'
+			;;
+		*)
+			erro "Código $1 é inválido!!!"
+			exit 1
+			;;
+	esac
+
+	ARQUIVO_VERSAO="$DIRETORIO/build.txt"
+}
+
+atualizaProprietario() {
+
+	local proprietario
+	proprietario="$(id -u):$(id -g)"
+
+	info "Alterando dono do diretório: $proprietario"
+	rodarComando sudo chown -R "$proprietario" "$DIRETORIO"
+}
+
+recuperaJson() {
+	info "Baixando JSON com link dos arquivos"
+	JSON=$(curl -s 'https://data.services.jetbrains.com/products/releases?code='$1'&latest=true&type=release&build=&_='$(date "+%s000") | jq -r ".$1[0]")
+
+	ARQUIVO_COMPACTADO="$DIRETORIO_TMP/$(basename "$(echo "$JSON" | jq -r '.downloads.linux.link')")"
+	info "Arquivo compactado: $ARQUIVO_COMPACTADO"
+
+	ARQUIVO_CHECKSUM="$DIRETORIO_TMP/$(basename "$(echo "$JSON" | jq -r '.downloads.linux.checksumLink')")"
+	info "Arquivo checksum: $ARQUIVO_CHECKSUM"
+}
+
+verificaSeEstaAtualizado() {
+
+	info "Verificando se a versão local é a última versão disponível."
+
+	# Verifica se a última versão já está instalada
+	if [[ -f "$ARQUIVO_VERSAO" ]]; then
+
+		local versaoAtual
+		versaoAtual=$(cat "$ARQUIVO_VERSAO")
+
+		if [[ "$versaoAtual" =~ -$(echo "$JSON" | jq -r '.build')$ ]]; then
+
+			echo -e "\n\n"
+			sucesso "A versão mais recente do $(getNomeIDE "$1") já está instalada. Nenhuma ação necessária."
+			echo -e "\n\n"
+
+			PULA_IDE=true
+		fi
+	else
+		aviso "Arquivo de versão não existe: $ARQUIVO_VERSAO"
+	fi
+}
+
+baixaPrograma() {
+	info "Baixando programa compactado"
+	rodarComando curl -sL "$(echo "$JSON" | jq -r '.downloads.linux.link')" -o "$ARQUIVO_COMPACTADO"
+	info "Baixando arquivo checksum"
+	rodarComando curl -sL "$(echo "$JSON" | jq -r '.downloads.linux.checksumLink')" -o $ARQUIVO_CHECKSUM
+}
+
+validaArquivoBaixado() {
+	info "Verificando veracidade do arquivo baixado: $(cat $ARQUIVO_CHECKSUM)"
+	rodarComando bash -c "cd '$DIRETORIO_TMP' && sha256sum -c '$ARQUIVO_CHECKSUM'"
+}
+
+getDiretorioRaizArquivoCompactado() {
+	tar -tzf "$ARQUIVO_COMPACTADO" 2>/dev/null \
+	  | sed 's#^\./##' \
+	  | awk -F/ '{print $1}' \
+	  | grep -v '^$' \
+	  | sort -u \
+	  | head -n1
+}
+
+extraiArquivo() {
+	info "Extraindo programa"
+	rodarComando tar -xzf "$ARQUIVO_COMPACTADO" -C "$DIRETORIO_TMP"
+}
+
+atualizandoPrograma() {
+	info 'Atualizando programa'
+
+	local diretorio_extraido
+	diretorio_extraido="$(basename "$(echo "$JSON" | jq -r '.link')")"
+
+	rodarComando sudo rm -fr "$DIRETORIO"
+	rodarComando sudo mv -f "$DIRETORIO_TMP/$(getDiretorioRaizArquivoCompactado)" "$DIRETORIO"
+}
+
+finalizaAtualizacao() {
+	info "Deletando arquivos"
+	rodarComando rm -rf "$DIRETORIO_TMP"
+}
+
+getNomeArquivoIcone() {
+	find "$DIRETORIO/bin" -maxdepth 1 -type f -iname '*.svg' -print -quit || echo ""
+}
+
+criaPontoDesktop() {
+	info "Procurando arquivo do ícone do programa"
+	local arquivoIcone
+	arquivoIcone=$(getNomeArquivoIcone)
+
+	if [[ $arquivoIcone == "" ]]; then
+		aviso "Não foi localizado o arquivo de ícone, o arquivo .desktop não será criado!"
+		return
+	fi
+
+	local arquivoBinario
+	arquivoBinario=${arquivoIcone%.*}
+
+	local arquivoDesktop
+	arquivoDesktop="/usr/share/applications/$(basename $DIRETORIO).desktop"
+
+	info "Criando arquivo .desktop para execução do programa"
+	cat << EOF | sudo tee "$arquivoDesktop"
+[Desktop Entry]
+Name=$(getNomeIDE "$1")
+Exec=$arquivoBinario %u
+Terminal=false
+Type=Application
+Icon=$arquivoIcone
+Categories=Development;IDE;
+StartupNotify=true
+EOF
+}
+
+atualizaDicionarios() {
+	info "Atualizando dicionários"
+	rodarComando cd "$DIRETORIO"
+	rodarComando sudo git pull
+}
+
+processaCodigo() {
+
+	info "Atualizando $(getNomeIDE "$1")"
+
+	setDiretorio "$1"
+
+	if [[ "$1" == "DICIONARIOS" ]]; then
+		atualizaDicionarios
+		return
+	fi
+
+	DIRETORIO_TMP="$(mktemp -d)"
+
+	info "Diretório temporário: $DIRETORIO_TMP"
+	cd "$DIRETORIO_TMP" || exit 1
+
+	recuperaJson "$1"
+	verificaSeEstaAtualizado "$1"
+
+	if [[ $PULA_IDE == true ]]; then
+		return
+	fi
+
+	baixaPrograma
+	validaArquivoBaixado
+	extraiArquivo
+	atualizandoPrograma
+	atualizaProprietario
+	criaPontoDesktop "$1"
+	finalizaAtualizacao
+
+	echo -e "\n\n"
+	sucesso "Atualização da IDE \"$(getNomeIDE "$1")\" concluída com sucesso!"
+	echo -e "\n\n"
+}
+
+main() {
+
+	processaParametros "$@"
+
+	for codigo in "${CODIGO_IDES[@]}"; do
+		processaCodigo "$codigo";
+		PULA_IDE=false;
+	done;
+}
+
+main "$@";

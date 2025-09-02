@@ -1,0 +1,2 @@
+#!/bin/bash
+"$(realpath $(dirname $0))/../utilitarios/atualizar-ides-jetbrains"  --phpstorm

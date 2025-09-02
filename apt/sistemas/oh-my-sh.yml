@@ -1,0 +1,8 @@
+---
+-   name: Instalação do Oh My SH
+    gather_facts: no
+    become: true
+
+    tasks:
+        -   name: Instalando
+            ansible.builtin.command: sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"

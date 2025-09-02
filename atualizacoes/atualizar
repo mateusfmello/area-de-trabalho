@@ -1,0 +1,125 @@
+#!/bin/bash
+
+source "$(realpath $(dirname $0))/../utilitarios/logs"
+
+PM=""
+
+detectarGerenciadorPacote() {
+	# Detectar gerenciador de pacotes
+	if command -v dnf >/dev/null 2>&1; then
+		PM=dnf
+	elif command -v apt-get >/dev/null 2>&1; then
+		PM=apt
+	elif command -v yum >/dev/null 2>&1; then
+		PM=yum
+	fi
+}
+
+atualizarPacotesSO() {
+	if [ -z "$PM" ]; then
+		erro "Nenhum gerenciador de pacotes suportado (dnf/apt/yum) encontrado no PATH. Pulando atualização do SO."
+	else
+		info "Gerenciador detectado: $PM"
+		case "$PM" in
+			dnf)
+				atualizarPacotesDNF
+				;;
+			apt)
+				atualizarPacotesAPT
+				;;
+			yum)
+				atualizarPacotesYUM
+				;;
+			*)
+				erro "Nenhum gerenciador de pacote encontrado."
+				;;
+		esac
+	fi
+}
+
+atualizarPacotesAPT() {
+	# Debian/Ubuntu/Mint
+	rodarComando sudo apt update || true
+	rodarComando sudo apt upgrade -y || true
+	rodarComando sudo apt autoremove -y || true
+	rodarComando sudo apt autoclean -y || true
+}
+
+atualizarPacotesDNF() {
+	# Rocky/RHEL/Fedora
+	rodarComando sudo dnf check-update || true
+	rodarComando sudo dnf upgrade -y || true
+	rodarComando sudo dnf autoremove -y || true
+	rodarComando sudo dnf clean all || true
+}
+
+atualizarPacotesYUM() {
+	# RHEL/CentOS (fallback)
+	rodarComando sudo yum check-update -y || true
+	rodarComando sudo yum update -y || true
+	rodarComando sudo yum autoremove -y || true
+}
+
+atualizarFlatpak() {
+	# Atualizar flatpak
+	if command -v flatpak >/dev/null 2>&1; then
+		info "Atualizando pacotes Flatpak"
+		rodarComando flatpak update -y
+	else
+		aviso "Flatpak não encontrado, pulando atualização do Flatpak."
+	fi
+}
+
+rodarOutrosComandosAtualizar() {
+
+	# Executar todos os executáveis no PATH com prefixo "atualizar-"
+	info "Procurando comandos executáveis com prefixo 'atualizar-' no PATH..."
+
+	IFS=':' read -r -a _path_dirs <<< "$PATH"
+	declare -a cmds_found=()
+	declare -A seen_name=()
+
+	for d in "${_path_dirs[@]}"; do
+		[ -d "$d" ] || continue
+		for f in "$d"/atualizar-*; do
+			[ -e "$f" ] || continue
+			[ -x "$f" ] || continue
+
+			name=$(basename "$f")
+			if [ -n "${seen_name[$name]:-}" ]; then
+				msg "Ignorando comando com mesmo nome: $f"
+				continue
+			fi
+
+			seen_name[$name]=1
+			cmds_found+=("$f")
+		done
+	done
+
+	# Também procurar por comandos no PATH que sejam links para executáveis com esse prefixo
+	# (o glob acima já pega links executáveis), então normalmente não é necessário mais.
+
+	if [ ${#cmds_found[@]} -eq 0 ]; then
+		info "Nenhum comando 'atualizar-*' executável encontrado no PATH."
+	else
+		info "Encontrados ${#cmds_found[@]} comando(s). Executando na ordem encontrada:"
+		for c in "${cmds_found[@]}"; do
+			info "Executando: $c"
+			# executa e registra o resultado, mas não interrompe o script caso falhe
+			if ! rodarComando "$c"; then
+				warn "Comando '$c' falhou — seguindo para o próximo."
+			fi
+		done
+	fi
+}
+
+main() {
+	detectarGerenciadorPacote
+	atualizarPacotesSO
+	atualizarFlatpak
+	rodarOutrosComandosAtualizar
+}
+
+main
+sucesso "Comando finalizado"
+exit 0
