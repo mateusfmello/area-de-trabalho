@@ -3,7 +3,7 @@
   hosts: localhost
   become: true
   vars:
-      path_dir: "/opt/config-desktop"
+      path_dir: "/opt/config-desktop/atualizacoes"
       profile_script: "/etc/profile.d/config-desktop.sh"
 
   tasks:
