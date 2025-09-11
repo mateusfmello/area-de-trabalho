@@ -7,7 +7,7 @@
     tasks:
         -   name: Instalando JQ
             ansible.builtin.apt:
-                name: js
+                name: jq
                 state: present
 
         -   name: Instalando WGET
