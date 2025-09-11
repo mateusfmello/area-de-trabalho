@@ -1,5 +1,6 @@
 ---
 -   name: Instalação do Oh My SH
+    hosts: localhost
     gather_facts: no
     become: true
 

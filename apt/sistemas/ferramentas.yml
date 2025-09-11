@@ -1,5 +1,6 @@
 ---
 -   name: Instalação de ferramentas
+    hosts: localhost
     gather_facts: no
     become: true
 
