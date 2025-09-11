@@ -5,6 +5,12 @@
     become: true
 
     tasks:
+        -   name: Create a directory if it does not exist
+            ansible.builtin.file:
+                path: /opt/firefox-developer
+                state: directory
+                mode: '0755'
+    
         -   name: Extraindo Firefox
             ansible.builtin.unarchive:
                 remote_src: yes
