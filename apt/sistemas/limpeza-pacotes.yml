@@ -5,6 +5,6 @@
     become: true
 
     tasks:
-        -   name: Rodando autoremove com o DNF
-            ansible.builtin.dnf:
+        -   name: Rodando autoremove com o APT
+            ansible.builtin.apt:
                 autoremove: yes
