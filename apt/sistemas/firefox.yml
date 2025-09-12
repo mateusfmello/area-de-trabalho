@@ -32,3 +32,4 @@
                 owner: nobody
                 group: nogroup
                 state: link
+                force: yes
