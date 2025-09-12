@@ -10,7 +10,7 @@
 -   import_playbook: ./apt/sistemas/obs.yml
 -   import_playbook: ./apt/sistemas/oh-my-sh.yml
     vars:
-        usuario: "{{ usuario }}"
+        usuario: "{{ usuario_sistema }}"
 -   import_playbook: ./apt/sistemas/postman.yml
 -   import_playbook: ./apt/sistemas/scripts-atualizacao.yml
 -   import_playbook: ./apt/sistemas/spotify.yml
