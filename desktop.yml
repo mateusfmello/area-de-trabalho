@@ -1,22 +1,18 @@
 ---
--   name: Configuração Desktop
-    hosts: localhost
-    become: true
-    gather_facts: true
-
-    tasks:
-        - import_tasks: ./apt/sistemas/arduino-ide.yml
-        - import_tasks: ./apt/sistemas/dicionario-ides.yml
-        - import_tasks: ./apt/sistemas/discord.yml
-        - import_tasks: ./apt/sistemas/docker.yml
-        - import_tasks: ./apt/sistemas/ferramentas.yml
-        - import_tasks: ./apt/sistemas/firefox.yml
-        - import_tasks: ./apt/sistemas/google-chrome.yml
-        - import_tasks: ./apt/sistemas/limpeza-pacotes.yml
-        - import_tasks: ./apt/sistemas/obs.yml
-        - import_tasks: ./apt/sistemas/oh-my-sh.yml
-        - import_tasks: ./apt/sistemas/postman.yml
-        - import_tasks: ./apt/sistemas/scripts-atualizacao.yml
-        - import_tasks: ./apt/sistemas/spotify.yml
-        - import_tasks: ./apt/sistemas/sublime-text.yml
-        - import_tasks: ./apt/sistemas/virtual-box.yml
+-   import_playbook: ./apt/sistemas/arduino-ide.yml
+-   import_playbook: ./apt/sistemas/dicionario-ides.yml
+-   import_playbook: ./apt/sistemas/discord.yml
+-   import_playbook: ./apt/sistemas/docker.yml
+-   import_playbook: ./apt/sistemas/ferramentas.yml
+-   import_playbook: ./apt/sistemas/firefox.yml
+-   import_playbook: ./apt/sistemas/google-chrome.yml
+-   import_playbook: ./apt/sistemas/limpeza-pacotes.yml
+-   import_playbook: ./apt/sistemas/obs.yml
+-   import_playbook: ./apt/sistemas/oh-my-sh.yml
+    vars:
+        usuario: "{{ usuario }}"
+-   import_playbook: ./apt/sistemas/postman.yml
+-   import_playbook: ./apt/sistemas/scripts-atualizacao.yml
+-   import_playbook: ./apt/sistemas/spotify.yml
+-   import_playbook: ./apt/sistemas/sublime-text.yml
+-   import_playbook: ./apt/sistemas/virtual-box.yml
