@@ -6,6 +6,7 @@
 
     vars:
         ohmyzsh_install_url: "https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh"
+        usuario: "{{ usuario_sistema }}"
 
     tasks:
         -   name: Gerando diretório temporário
