@@ -31,12 +31,12 @@
                 force: yes
                 
         -   name: Executar script de instalação em modo unattended
-            become_user: "{{ ansible_user_id }}"
+            become_user: "{{ usuario }}"
             ansible.builtin.command: "sh {{ tempdir_ohmyzsh.path }}/install.sh --unattended"
 
         -   name: Definir ZSH como shell padrão
             ansible.builtin.user:
-                name: "{{ ansible_user_id }}"
+                name: "{{ usuario }}"
                 shell: /bin/zsh
 
 
