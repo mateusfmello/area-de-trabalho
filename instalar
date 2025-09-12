@@ -3,14 +3,6 @@
 # Propósito: instalar dependências e scripts
 # Uso: sudo ./instalar
 
-## Checa privilégios (executar como root ou via sudo)
-if [[ $EUID -ne 0 ]]; then
-	echo "Este script precisa ser executado como root."
-	echo "Execute:"
-	echo "sudo $0"
-	exit 1
-fi
-
 source "$(realpath $(dirname $0))/utilitarios/logs"
 
 read -r -s -p "Informe a senha sudo do usuário para o Ansible: " SENHA_SUDO
@@ -31,19 +23,19 @@ fi
 
 #"$(realpath $(dirname $0))/atualizacoes/atualizar"
 
-apt update -y
+sudo apt update -y
 
 info "Instalando pré-requisitos..."
-rodarComando apt install -y software-properties-common
+rodarComando sudo apt install -y software-properties-common
 
 info "Adicionando PPA do próprio ansible"
-rodarComando add-apt-repository --yes ppa:ansible/ansible
+rodarComando sudo add-apt-repository --yes ppa:ansible/ansible
 
 info "Atualizando pacotes"
-rodarComando apt update -y
+rodarComando sudo apt update -y
 
 info "Instalando Ansible"
-rodarComando apt install -y ansible
+rodarComando sudo apt install -y ansible
 
 info "Verificando instalação do Ansible..."
 if command -v ansible >/dev/null 2>&1; then
