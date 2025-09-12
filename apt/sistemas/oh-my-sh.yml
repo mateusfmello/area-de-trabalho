@@ -4,11 +4,45 @@
     gather_facts: no
     become: true
 
+    vars:
+        zsh_user: "{{ ansible_user }}"
+        zsh_home: "/home/{{ ansible_user }}"
+        ohmyzsh_install_url: "https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh"
+
     tasks:
-        -   name: Instalando ZSH
+        -   name: Gerando diretório temporário
+            ansible.builtin.tempfile:
+                state: directory
+                suffix: ohmyzsh
+            register: tempdir_ohmyzsh
+    
+        -   name: Instalando dependências
             ansible.builtin.apt:
-                name: zsh
+                name:
+                    - curl
+                    - wget
+                    - git
+                    - zsh
                 state: present
+
+        -   name: Baixar script de instalação do Oh My Zsh
+            ansible.builtin.get_url:
+                url: "{{ ohmyzsh_install_url }}"
+                dest: "{{ tempdir_ohmyzsh.path }}"
+                mode: '0777'
+                force: yes
                 
-        -   name: Instalando Oh My ZSH
-            ansible.builtin.command: sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+        -   name: Executar script de instalação em modo unattended
+            ansible.builtin.command: "sh {{ tempdir_ohmyzsh.path }}/install.sh --unattended"
+
+        -   name: Definir ZSH como shell padrão
+            ansible.builtin.user:
+                name: "{{ zsh_user }}"
+                shell: /bin/zsh
+
+
+    
+
+    
+
+    
