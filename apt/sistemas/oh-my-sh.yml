@@ -1,9 +1,14 @@
 ---
--   name: Instalação do Oh My SH
+-   name: Instalação do Oh My ZSH
     hosts: localhost
     gather_facts: no
     become: true
 
     tasks:
-        -   name: Instalando
+        -   name: Instalando ZSH
+            ansible.builtin.apt:
+                name: zsh
+                state: present
+                
+        -   name: Instalando Oh My ZSH
             ansible.builtin.command: sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
