@@ -1,12 +1,10 @@
 ---
 -   name: Instalação do Oh My ZSH
     hosts: localhost
-    gather_facts: no
+    gather_facts: true
     become: true
 
     vars:
-        zsh_user: "{{ ansible_user }}"
-        zsh_home: "/home/{{ ansible_user }}"
         ohmyzsh_install_url: "https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh"
 
     tasks:
@@ -33,11 +31,12 @@
                 force: yes
                 
         -   name: Executar script de instalação em modo unattended
+            become_user: "{{ ansible_user }}"
             ansible.builtin.command: "sh {{ tempdir_ohmyzsh.path }}/install.sh --unattended"
 
         -   name: Definir ZSH como shell padrão
             ansible.builtin.user:
-                name: "{{ zsh_user }}"
+                name: "{{ ansible_user }}"
                 shell: /bin/zsh
 
 
