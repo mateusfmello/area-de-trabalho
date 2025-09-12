@@ -6,7 +6,6 @@
 
     vars:
         ohmyzsh_install_url: "https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh"
-        usuario: "{{ usuario_sistema }}"
 
     tasks:
         -   name: Gerando diretório temporário
@@ -32,12 +31,13 @@
                 force: yes
                 
         -   name: Executar script de instalação em modo unattended
-            become_user: "{{ usuario }}"
+            become: true
+            become_user: "{{ usuario_sistema }}"
             ansible.builtin.command: "sh {{ tempdir_ohmyzsh.path }}/install.sh --unattended"
 
         -   name: Definir ZSH como shell padrão
             ansible.builtin.user:
-                name: "{{ usuario }}"
+                name: "{{ usuario_sistema }}"
                 shell: /bin/zsh
 
 
