@@ -14,7 +14,7 @@ wget -O /tmp/area-de-trabalho.zip https://github.com/mateusfmello/area-de-trabal
 sudo unzip /tmp/area-de-trabalho.zip -d /tmp
 sudo mv /tmp/area-de-trabalho-main/* /tmp/area-de-trabalho-main/.* /opt/config-desktop
 sudo rm -rf /tmp/area-de-trabalho-main /tmp/area-de-trabalho.zip
-sudo /opt/config-desktop/instalar
+/opt/config-desktop/instalar
 ```
 
 ## +
