@@ -11,7 +11,7 @@ Feito e validado para uso com o Linux Mint, porém deve funcionar com Ubuntu e d
 Execute:
 
 ```bash
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/mateusfmello/area-de-trabalho/refs/heads/main/instalar)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/mateusfmello/area-de-trabalho/refs/heads/main/instalar)"
 ```
 
 ### Wget
@@ -19,7 +19,7 @@ sh -c "$(curl -fsSL https://raw.githubusercontent.com/mateusfmello/area-de-traba
 Execute:
 
 ```bash
-sh -c "$(wget https://raw.githubusercontent.com/mateusfmello/area-de-trabalho/refs/heads/main/instalar -O -)"
+bash -c "$(wget https://raw.githubusercontent.com/mateusfmello/area-de-trabalho/refs/heads/main/instalar -O -)"
 ```
 
 ## +
