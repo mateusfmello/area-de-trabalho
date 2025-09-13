@@ -14,7 +14,7 @@
         -   name: Criando diretório temporário
             ansible.builtin.tempfile:
                 state: directory
-                suffix: firefox-developer
+                prefix: firefox-developer-
             register: tmp_dir
     
         -   name: Extraindo Firefox
@@ -25,7 +25,7 @@
 
         -   name: Copiado arquivos
             ansible.builtin.copy:
-               src: "{{ tmp_dir.path }}/firefox/*"
+               src: "{{ tmp_dir.path }}/firefox/."
                dest: /opt/firefox-developer/
 
         -   name: Disponibilizando binário do Firefox para usuários
