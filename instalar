@@ -46,8 +46,7 @@ else
 fi
 
 info "Instalando dependências com Ansible"
-printf '{"ansible_become_pass":"%s","usuario_sistema":"%s"}\n' "$SENHA_SUDO" "$USER" | \
-  ansible-playbook "$(realpath $(dirname $0))/desktop.yml" --extra-vars -
+ansible-playbook "$(realpath $(dirname $0))/desktop.yml" --extra-vars "$(printf '{"ansible_become_pass":"%s","usuario_sistema":"%s"}\n' "$SENHA_SUDO" "$USER")"
 
 SENHA_SUDO=""
 unset SENHA_SUDO
