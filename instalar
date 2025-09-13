@@ -3,13 +3,15 @@
 # Propósito: instalar dependências e scripts
 # Uso: ./instalar
 
-sudo mkdir -p /opt/config-desktop
+DIR="/opt/config-desktop"
+
+sudo mkdir -p "$DIR"
 wget -O /tmp/area-de-trabalho.zip https://github.com/mateusfmello/area-de-trabalho/archive/refs/heads/main.zip
 sudo unzip /tmp/area-de-trabalho.zip -d /tmp
-sudo mv /tmp/area-de-trabalho-main/* /tmp/area-de-trabalho-main/.* /opt/config-desktop
+sudo mv /tmp/area-de-trabalho-main/* /tmp/area-de-trabalho-main/.* "$DIR"
 sudo rm -rf /tmp/area-de-trabalho-main /tmp/area-de-trabalho.zip
 
-source "$(realpath $(dirname $0))/utilitarios/logs"
+source "$DIR/utilitarios/logs"
 
 read -r -s -p "Informe a senha sudo do usuário para o Ansible: " SENHA_SUDO
 echo
@@ -26,8 +28,6 @@ if [[ "$REPETE_SENHA_SUDO" != "$SENHA_SUDO" ]]; then
 	erro "Senhas não conferem!!!"
 	exit 1
 fi
-
-#"$(realpath $(dirname $0))/atualizacoes/atualizar"
 
 sudo apt update -y
 
@@ -52,7 +52,7 @@ else
 fi
 
 info "Instalando dependências com Ansible"
-ansible-playbook "$(realpath $(dirname $0))/desktop.yml" --extra-vars "$(printf '{"ansible_become_pass":"%s","usuario_sistema":"%s"}\n' "$SENHA_SUDO" "$USER")"
+ansible-playbook "$DIR/desktop.yml" --extra-vars "$(printf '{"ansible_become_pass":"%s","usuario_sistema":"%s"}\n' "$SENHA_SUDO" "$USER")"
 
 SENHA_SUDO=""
 unset SENHA_SUDO
