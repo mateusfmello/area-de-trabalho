@@ -7,7 +7,7 @@
   vars:
       vbox_key_url: "https://www.virtualbox.org/download/oracle_vbox_2016.asc"
       vbox_keyring: "/usr/share/keyrings/oracle-virtualbox-2016.gpg"
-      vbox_repo: "deb [arch={{ arquitetura_computador.stout }} signed-by={{ vbox_keyring }}] https://download.virtualbox.org/virtualbox/debian {{ ubuntu_codename.stdout }} contrib"
+      vbox_repo: "deb [arch={{ arquitetura_computador.stdout }} signed-by={{ vbox_keyring }}] https://download.virtualbox.org/virtualbox/debian {{ ubuntu_codename.stdout }} contrib"
       vbox_repo_filename: "virtualbox.list"
       vbox_packages:
           - virtualbox
