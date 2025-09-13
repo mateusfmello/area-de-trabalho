@@ -10,16 +10,27 @@
                 path: /opt/firefox-developer
                 state: directory
                 mode: '0755'
+
+        -   name: Criando diretório temporário
+            ansible.builtin.tempfile:
+                state: directory
+                suffix: firefox-developer
+            register: tmp_dir
     
         -   name: Extraindo Firefox
             ansible.builtin.unarchive:
                 remote_src: yes
                 src: https://download.mozilla.org/?product=firefox-devedition-latest-ssl&os=linux64&lang=pt-BR
-                dest: /opt/firefox-developer/
+                dest: "{{ tmp_dir.path }}"
+
+        -   name: Copiado arquivos
+            ansible.builtin.copy:
+               src: "{{ tmp_dir.path }}/firefox/*"
+               dest: /opt/firefox-developer/
 
         -   name: Disponibilizando binário do Firefox para usuários
             ansible.builtin.file:
-                src: /opt/firefox-developer/firefox
+                src: /opt/firefox-developer/firefox-bin
                 dest: /usr/local/bin/firefox-developer
                 owner: nobody
                 group: nogroup
@@ -27,9 +38,14 @@
 
         -   name: Adicionando Firefox nas aplicações
             ansible.builtin.file:
-                src: ../../configuracoes/firefox-developer.desktop
+                src: "{{ playbook_dir }}/../../configuracoes/firefox-developer.desktop"
                 dest: /usr/share/applications/firefox-developer.desktop
                 owner: nobody
                 group: nogroup
                 state: link
                 force: yes
+        
+        -   name: Deletando diretório temporário
+            ansible.builtin.file:
+                path: "{{ tmp_dir.path }}"
+                state: absent
