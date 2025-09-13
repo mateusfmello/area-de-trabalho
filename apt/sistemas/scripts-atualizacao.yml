@@ -38,7 +38,7 @@
       
       - name: Subindo scripts para o terminal
         become_user: "{{ usuario_sistema }}"
-        ansible.builtin.command: source /etc/profile.d/config-desktop.sh
+        ansible.builtin.shell: source /etc/profile.d/config-desktop.sh
 
       - name: Rodando scripts de atualização para instalar programas
         ansible.builtin.command: atualizar
