@@ -29,6 +29,12 @@
                 dest: "{{ tempdir_ohmyzsh.path }}"
                 mode: '0777'
                 force: yes
+
+        -   name: Ajustar permissões do diretório temporário
+             ansible.builtin.file:
+                 path: "{{ tempdir_ohmyzsh.path }}"
+                 recurse: true
+                 mode: '0777'
                 
         -   name: Executar script de instalação em modo unattended
             become: true
