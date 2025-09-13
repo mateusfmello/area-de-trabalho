@@ -5,6 +5,7 @@
 
 DIR="/opt/config-desktop"
 
+sudo rm -fr "$DIR"
 sudo mkdir -p "$DIR"
 wget -O /tmp/area-de-trabalho.zip https://github.com/mateusfmello/area-de-trabalho/archive/refs/heads/main.zip
 sudo unzip /tmp/area-de-trabalho.zip -d /tmp
