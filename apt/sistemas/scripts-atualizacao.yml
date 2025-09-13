@@ -39,6 +39,8 @@
       - name: Subindo scripts para o terminal
         become_user: "{{ usuario_sistema }}"
         ansible.builtin.shell: source /etc/profile.d/config-desktop.sh
+        args:
+            executable: /bin/bash
 
       - name: Rodando scripts de atualização para instalar programas
         ansible.builtin.command: "{{ path_dir }}/atualizar"
