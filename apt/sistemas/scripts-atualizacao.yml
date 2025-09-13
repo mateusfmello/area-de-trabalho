@@ -20,7 +20,7 @@
             dest: "{{ profile_script }}"
             owner: root
             group: root
-            mode: "0755"
+            mode: "0644"
             content: |
                 #!/bin/sh
                 # Script criado pelo Ansible - adiciona /opt/config-desktop ao PATH se existir
