@@ -35,6 +35,11 @@
                 path: "{{ tempdir_ohmyzsh.path }}"
                 recurse: true
                 mode: '0777'
+
+        -   name: Remove diretório do .oh-my-zsh
+            ansible.builtin.file:
+                path: "/home/{{ usuario_sistema }}/.oh-my-zsh"
+                state: absent
                 
         -   name: Executar script de instalação em modo unattended
             become: true
