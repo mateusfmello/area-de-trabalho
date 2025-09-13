@@ -5,12 +5,23 @@
     become: true
 
     tasks:
-        -   name: Adicionando chaves
-            ansible.builtin.command: curl -fsSL https://download.spotify.com/debian/pubkey_C85668DF69375001.gpg | sudo gpg --dearmor --yes -o /etc/apt/trusted.gpg.d/spotify.gpg
+        -   name: Baixar chave GPG do Spotify
+            ansible.builtin.get_url:
+                url: https://download.spotify.com/debian/pubkey_C85668DF69375001.gpg
+                dest: /tmp/spotify.gpg
 
-        -   name: Adicionando repositório
-            ansible.builtin.command: echo "deb https://repository.spotify.com stable non-free" | sudo tee /etc/apt/sources.list.d/spotify.list
+        -   name: Converter chave para formato gpg e mover para trusted.gpg.d
+            ansible.builtin.command:
+                cmd: gpg --dearmor -o /etc/apt/trusted.gpg.d/spotify.gpg /tmp/spotify.gpg
+            args:
+                creates: /etc/apt/trusted.gpg.d/spotify.gpg
 
+        -   name: Adicionar repositório do Spotify
+            ansible.builtin.apt_repository:
+                repo: 'deb https://repository.spotify.com stable non-free'
+                filename: spotify
+                state: present
+    
         -   name: Instalando Spotify
             ansible.builtin.apt:
                 name: spotify-client
