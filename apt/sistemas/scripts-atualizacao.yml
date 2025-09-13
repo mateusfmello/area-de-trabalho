@@ -41,6 +41,6 @@
         ansible.builtin.shell: source /etc/profile.d/config-desktop.sh
 
       - name: Rodando scripts de atualização para instalar programas
-        ansible.builtin.command: atualizar
+        ansible.builtin.command: "{{ path_dir }}/atualizar"
 
         
