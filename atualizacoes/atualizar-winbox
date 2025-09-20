@@ -94,6 +94,29 @@ instalarNovaVersao() {
 	echo "$URL" > "$VERSION_FILE"
 }
 
+criaPontoDesktop() {
+
+	local arquivoDesktop
+	arquivoDesktop="/usr/share/applications/WinBox.desktop"
+
+	info "Criando arquivo .desktop para execução do programa"
+	cat << EOF | sudo tee "$arquivoDesktop"
+[Desktop Entry]
+Name=WinBox
+Comment=MikroTik Winbox - RouterOS GUI
+GenericName=Router management
+Exec=$DEST_BIN %u
+TryExec=$DEST_BIN %u
+Icon=$DEST_IMG
+Terminal=false
+Type=Application
+Categories=Network;Utility;
+MimeType=application/x-winbox;
+StartupWMClass=winbox
+Keywords=mikrotik;router;ros;winbox;
+EOF
+}
+
 main() {
 
 	criaDiretorioInstalacao
@@ -104,6 +127,7 @@ main() {
 	baixandoWinbox
 	validaTamanhoArquivoBaixado
 	instalarNovaVersao
+	criaPontoDesktop
 
 	echo "Atualização concluída!"
 	echo "  Binário: $DEST_BIN"
