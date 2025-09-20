@@ -1,0 +1,12 @@
+---
+-   name: Configurações para o Cinnamon
+    hosts: localhost
+    gather_facts: no
+
+    tasks:
+        -   name: Setando altura da barra de tarefa
+            ansible.builtin.command: gsettings set org.cinnamon panels-height "['1:25']"
+
+        -   name: Setando altura dos ícones da barra de tarefa
+            ansible.builtin.command: |
+                gsettings set org.cinnamon panel-zone-icon-sizes '[{"panelId": 1, "left": 22, "center": 0, "right": 18}]'
