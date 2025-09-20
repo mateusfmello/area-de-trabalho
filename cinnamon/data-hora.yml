@@ -1,0 +1,68 @@
+---
+-   name: Configurações para o Cinnamon
+    hosts: localhost
+    gather_facts: no
+
+    vars:
+        applet_file: /usr/share/cinnamon/applets/calendar@cinnamon.org/settings-schema.json
+        custom_format: "%a, %e/%m %b, %H:%M:%S"
+        custom_tooltip_format: "%A, %e/%m/%Y, %B, %H:%M:%S"
+        backup_suffix: ".ansible.bkp"
+
+    tasks:
+        -   name: Verifica se o arquivo existe
+            ansible.builtin.stat:
+                path: "{{ applet_file }}"
+            register: file_stat
+
+        -   name: Falhar se o arquivo não existir
+            ansible.builtin.fail:
+                msg: "Arquivo {{ applet_file }} não encontrado."
+            when: not file_stat.stat.exists
+
+        -   name: Fazer backup do settings-schema.json (apenas se ainda não existir backup)
+            ansible.builtin.copy:
+                src: "{{ applet_file }}"
+                dest: "{{ applet_file }}{{ backup_suffix }}"
+                remote_src: yes
+                owner: root
+                group: root
+                mode: '0644'
+            when: not (app_file_backup is defined and app_file_backup.stat.exists)
+            vars:
+                app_file_backup: "{{ lookup('ansible.builtin.stat', applet_file + backup_suffix, wantlist=False) }}"
+            ignore_errors: yes
+
+        -   name: Ler settings-schema.json
+            ansible.builtin.slurp:
+                path: "{{ applet_file }}"
+            register: slurped
+
+        -   name: Decodificar e converter para objeto JSON
+            set_fact:
+                schema_text: "{{ slurped.content | b64decode }}"
+                schema_obj: "{{ (slurped.content | b64decode) | from_json }}"
+
+        -   name: Ajustar apenas os campos default desejados (em memória)
+            set_fact:
+                new_schema_obj: >-
+                    {{ schema_obj | combine({
+                         'custom-format': (schema_obj['custom-format'] | default({}) ) | combine({'default': custom_format}),
+                         'custom-tooltip-format': (schema_obj['custom-tooltip-format'] | default({}) ) | combine({'default': custom_tooltip_format})
+                       }, recursive=True) }}
+
+        -   name: Assegurar que o novo objeto JSON foi gerado
+            ansible.builtin.assert:
+                that:
+                    - new_schema_obj is defined
+                    - new_schema_obj['custom-format']['default'] == custom_format
+                    - new_schema_obj['custom-tooltip-format']['default'] == custom_tooltip_format
+
+        -   name: Escrever novo settings-schema.json
+            ansible.builtin.copy:
+                content: "{{ new_schema_obj | to_nice_json }}"
+                dest: "{{ applet_file }}"
+                owner: root
+                group: root
+                mode: '0644'
+                backup: yes
