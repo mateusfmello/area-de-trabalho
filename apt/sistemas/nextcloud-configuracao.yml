@@ -1,0 +1,29 @@
+---
+-   name: Configuração Nextcloud
+    hosts: localhost
+    gather_facts: no
+
+    tasks:
+        -   name: Ignorando pastas e arquivos de projetos
+            ansible.builtin.blockinfile:
+                path: "/home/{{ usuario_sistema }}/.config/Nextcloud/sync-exclude.lst"
+                block: |
+                    ]node_modules
+                    ]vendor
+                    ]*/www/var
+                    ]build
+                    ]dist
+                    ]*.log
+                    ].env.local*
+                    ].env.local.php
+                    ].env.*.local
+                    ]prod.decrypt.private.php
+                    ]*/public/bundles
+                    ]*/public_html/bundles
+                    ].phpunit
+                    ].phpunit.result.cache
+                    ]phpunit.xml
+                    ]npm-debug.log
+                    ]yarn-error.log
+                    ]*/config/jwt/*.pe
+                marker: "# {mark} Gerenciado pelo Ansible {{ item.name }}"
