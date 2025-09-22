@@ -1,5 +1,5 @@
 ---
--   name: Configurações para o Cinnamon
+-   name: Configurações de data e hora
     hosts: localhost
     gather_facts: no
 
@@ -19,6 +19,11 @@
             ansible.builtin.fail:
                 msg: "Arquivo {{ applet_file }} não encontrado."
             when: not file_stat.stat.exists
+
+        -   name: Verifica se o arquivo de backup existe
+            ansible.builtin.stat:
+                path: "{{ applet_file }}{{ backup_suffix }}"
+            register: app_file_backup
 
         -   name: Fazer backup do settings-schema.json (apenas se ainda não existir backup)
             ansible.builtin.copy:
