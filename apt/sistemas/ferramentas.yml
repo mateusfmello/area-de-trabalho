@@ -29,3 +29,8 @@
             ansible.builtin.apt:
                 name: nano
                 state: present
+
+        -   name: Instalando nfs-common
+            ansible.builtin.apt:
+                name: nfs-common
+                state: present
