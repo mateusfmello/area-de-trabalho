@@ -10,3 +10,7 @@
         -   name: Setando altura dos ícones da barra de tarefa
             ansible.builtin.command: |
                 gsettings set org.cinnamon panel-zone-icon-sizes '[{"panelId": 1, "left": 22, "center": 0, "right": 18}]'
+
+        -   name: Aceita volume de sons amplificado
+            ansible.builtin.command: |
+                gsettings set org.cinnamon.desktop.sound allow-amplified-volume true
