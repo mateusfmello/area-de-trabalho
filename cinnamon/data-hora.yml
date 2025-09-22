@@ -40,7 +40,6 @@
 
         -   name: Decodificar e converter para objeto JSON
             set_fact:
-                schema_text: "{{ slurped.content | b64decode }}"
                 schema_obj: "{{ (slurped.content | b64decode) | from_json }}"
 
         -   name: Ajustar apenas os campos default desejados (em memória)
