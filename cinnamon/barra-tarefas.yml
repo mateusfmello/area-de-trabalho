@@ -21,8 +21,10 @@
             - "idea.desktop"
             - "sublime_text.desktop"
             - "arduino-ide.desktop"
+            - "com.obsproject.Studio.desktop:flatpak"
             - "spotify.desktop"
             - "chrome-aefeiggpkcfffkkcfndjgkiefnpmnbio-Default.desktop"
+            - "virtualbox.desktop"
 
     tasks:
         -   name: Setando altura da barra de tarefa
