@@ -1,0 +1,100 @@
+---
+-   name: Configurando a barra de tarefas
+    hosts: localhost
+    gather_facts: no
+
+    vars:
+        json_file: "/home/{{ usuario_sistema }}/.config/cinnamon/spices/grouped-window-list@cinnamon.org/2.json"
+        backup_suffix: ".ansible.bkp"
+        new_pinned:
+            - "nemo.desktop"
+            - "org.gnome.Terminal.desktop"
+            - "firefox.desktop"
+            - "firefox-developer.desktop"
+            - "google-chrome.desktop"
+            - "postman.desktop"
+            - "goland.desktop"
+            - "phpstorm.desktop"
+            - "webstorm.desktop"
+            - "datagrip.desktop"
+            - "pycharm.desktop"
+            - "idea.desktop"
+            - "sublime_text.desktop"
+            - "arduino-ide.desktop"
+            - "spotify.desktop"
+            - "chrome-aefeiggpkcfffkkcfndjgkiefnpmnbio-Default.desktop"
+
+    tasks:
+        -   name: Setando altura da barra de tarefa
+            ansible.builtin.command: gsettings set org.cinnamon panels-height "['1:25']"
+
+        -   name: Setando altura dos ícones da barra de tarefa
+            ansible.builtin.command: |
+                gsettings set org.cinnamon panel-zone-icon-sizes '[{"panelId": 1, "left": 22, "center": 0, "right": 18}]'
+
+        -   name: Verifica se o arquivo existe
+            ansible.builtin.stat:
+                path: "{{ json_file }}"
+            register: file_stat
+
+        -   name: Falhar se o arquivo não existir
+            ansible.builtin.fail:
+                msg: "Arquivo {{ json_file }} não encontrado."
+            when: not file_stat.stat.exists
+
+        -   name: Fazer backup do {{ json_file }} (apenas se ainda não existir backup)
+            ansible.builtin.copy:
+                src: "{{ json_file }}"
+                dest: "{{ json_file }}{{ backup_suffix }}"
+                remote_src: yes
+                owner: root
+                group: root
+                mode: '0644'
+            when: not (app_file_backup is defined and app_file_backup.stat.exists)
+            vars:
+                app_file_backup: "{{ lookup('ansible.builtin.stat', json_file + backup_suffix, wantlist=False) }}"
+            ignore_errors: yes
+
+        -   name: Ler arquivo JSON
+            slurp:
+                src: "{{ json_file }}"
+            register: json_raw
+            failed_when: json_raw is failed
+
+        -   name: Converter conteúdo para objeto JSON
+            set_fact:
+                json_obj: "{{ (json_raw.content | b64decode) | from_json }}"
+
+        -   name: Garantir que a chave '.pinned-apps' exista e limpar value
+            set_fact:
+                json_obj: >-
+                    {{
+                      json_obj | combine(
+                        {
+                          '.pinned-apps':
+                            (json_obj['.pinned-apps'] | default({})) |
+                            combine({'value': []})
+                        },
+                        recursive=True
+                      )
+                    }}
+
+        -   name: Definir .pinned-apps.value com a nova lista
+            set_fact:
+                json_obj: >-
+                    {{
+                      json_obj | combine(
+                        {
+                          '.pinned-apps':
+                            (json_obj['.pinned-apps'] | default({})) |
+                            combine({'value': new_pinned})
+                        },
+                        recursive=True
+                      )
+                    }}
+
+        -   name: Escrever de volta o JSON atualizado
+            ansible.builtin.copy:
+                content: "{{ json_obj | to_nice_json }}"
+                dest: "{{ json_file }}"
+                backup: yes
