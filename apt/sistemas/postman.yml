@@ -80,7 +80,7 @@
          -    name: Criando .desktop
               ansible.builtin.copy:
                   dest: /usr/share/applications/postman.desktop
-                  mode: '0777'
+                  mode: '0644'
                   content: |
                       [Desktop Entry]
                       Name=Postman
