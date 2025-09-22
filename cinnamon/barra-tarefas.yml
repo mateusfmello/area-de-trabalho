@@ -79,8 +79,8 @@
                     {{
                       json_obj | combine(
                         {
-                          '.pinned-apps':
-                            (json_obj['.pinned-apps'] | default({})) |
+                          'pinned-apps':
+                            (json_obj['pinned-apps'] | default({})) |
                             combine({'value': []})
                         },
                         recursive=True
@@ -93,8 +93,8 @@
                     {{
                       json_obj | combine(
                         {
-                          '.pinned-apps':
-                            (json_obj['.pinned-apps'] | default({})) |
+                          'pinned-apps':
+                            (json_obj['pinned-apps'] | default({})) |
                             combine({'value': new_pinned})
                         },
                         recursive=True
