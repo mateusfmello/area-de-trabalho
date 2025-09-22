@@ -1,0 +1,29 @@
+---
+-    name: Instando Whimsical
+     hosts: localhost
+     become: false
+
+     tasks:
+         -    name: Criando .desktop
+              ansible.builtin.copy:
+                  dest: "/home/{{ usuario_sistema }}/.local/share/applications/chrome-aefeiggpkcfffkkcfndjgkiefnpmnbio-Default.desktop"
+                  mode: '0644'
+                  content: |
+                      #!/usr/bin/env xdg-open
+                      [Desktop Entry]
+                      Version=1.0
+                      Terminal=false
+                      Type=Application
+                      Name=Whimsical
+                      Exec=/opt/google/chrome/google-chrome --profile-directory=Default --app-id=aefeiggpkcfffkkcfndjgkiefnpmnbio
+                      Icon=chrome-aefeiggpkcfffkkcfndjgkiefnpmnbio-Default
+                      StartupWMClass=crx_aefeiggpkcfffkkcfndjgkiefnpmnbio
+                      Actions=New-board;New-doc
+                      
+                      [Desktop Action New-board]
+                      Name=New board
+                      Exec=/opt/google/chrome/google-chrome --profile-directory=Default --app-id=aefeiggpkcfffkkcfndjgkiefnpmnbio --app-launch-url-for-shortcuts-menu-item=https://whimsical.com/new/board
+                      
+                      [Desktop Action New-doc]
+                      Name=New doc
+                      Exec=/opt/google/chrome/google-chrome --profile-directory=Default --app-id=aefeiggpkcfffkkcfndjgkiefnpmnbio --app-launch-url-for-shortcuts-menu-item=https://whimsical.com/new/doc
