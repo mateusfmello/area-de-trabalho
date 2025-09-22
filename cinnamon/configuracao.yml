@@ -11,3 +11,7 @@
         -   name: Definindo modo escuro com detalhes em laranja
             ansible.builtin.command: |
                 gsettings set org.cinnamon.desktop.interface gtk-theme 'Mint-Y-Dark-Orange'
+
+        -   name: Exibindo arquivos ocultos no Nemo
+            ansible.builtin.command: |
+                gsettings set org.nemo.preferences show-hidden-files true
