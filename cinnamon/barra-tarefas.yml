@@ -2,6 +2,7 @@
 -   name: Configurando a barra de tarefas
     hosts: localhost
     gather_facts: no
+    become: true
 
     vars:
         json_file: "/home/{{ usuario_sistema }}/.config/cinnamon/spices/grouped-window-list@cinnamon.org/2.json"
@@ -44,13 +45,18 @@
                 msg: "Arquivo {{ json_file }} não encontrado."
             when: not file_stat.stat.exists
 
+        -   name: Verifica se o arquivo de backup existe
+            ansible.builtin.stat:
+                path: "{{ json_file }}{{ backup_suffix }}"
+            register: app_file_backup
+
         -   name: Fazer backup do {{ json_file }} (apenas se ainda não existir backup)
             ansible.builtin.copy:
                 src: "{{ json_file }}"
                 dest: "{{ json_file }}{{ backup_suffix }}"
                 remote_src: yes
-                owner: root
-                group: root
+                owner: "{{ usuario_sistema }}"
+                group: "{{ usuario_sistema }}"
                 mode: '0644'
             when: not (app_file_backup is defined and app_file_backup.stat.exists)
             vars:
