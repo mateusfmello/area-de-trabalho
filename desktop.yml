@@ -1,5 +1,6 @@
 ---
 -   import_playbook: ./apt/sistemas/scripts-atualizacao.yml
+-   import_playbook: ./apt/sistemas/nextcloud-configuracao.yml
 -   import_playbook: ./apt/sistemas/ferramentas.yml
 -   import_playbook: ./apt/sistemas/arduino-ide.yml
 -   import_playbook: ./apt/sistemas/dicionario-ides.yml
