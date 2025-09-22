@@ -10,6 +10,44 @@ VERSION_FILE="/opt/Nextcloud.AppImage.version"
 URL=""
 REINICIAR="s"
 
+QUIET=0
+
+exibirModoUsar() {
+	cat <<EOF
+Uso: $0 [OPÇÕES]
+
+Opções:
+  -q             Quiet, desativa interações
+  -h, --help     Mostra esta ajuda
+
+Exemplo: $0 -q
+EOF
+}
+
+processaParametros() {
+	if [ "$#" -eq 0 ]; then
+		QUIET=0
+	else
+		while [ "$#" -gt 0 ]; do
+			case "$1" in
+				-q)
+					QUIET=1
+					shift
+					;;
+				-h|--help)
+					exibirModoUsar "$@"
+					exit 0
+					;;
+				*)
+					echo "Opção desconhecida: $1" >&2
+					exibirModoUsar "$@"
+					exit 1
+					;;
+			esac
+		done
+	fi
+}
+
 recuperaPID() {
 	pgrep -f "[N]extcloud.AppImage"
 }
@@ -45,10 +83,19 @@ verificaSePrecisaAtualizar() {
 }
 
 verificaSeDeveReiniciar() {
+
+	if [ $QUIET -eq 1 ]; then
+	    return
+	fi
+
 	read -rp "Você deseja reiniciar o Nextcloud? [S/n] " REINICIAR
 }
 
 encerrarNextcloud() {
+
+	if [ $QUIET -eq 1 ]; then
+	    return
+	fi
 
 	if [[ $REINICIAR != "S" && $REINICIAR != "s" ]]; then
 	    return
@@ -91,6 +138,10 @@ instalandoNextcloud() {
 
 aguardarEncerramentoNextcloud() {
 
+	if [ $QUIET -eq 1 ]; then
+	    return
+	fi
+
 	if [[ $REINICIAR != "S" && $REINICIAR != "s" ]]; then
 		return
 	fi
@@ -116,6 +167,10 @@ aguardarEncerramentoNextcloud() {
 
 iniciandoNextcloud() {
 
+	if [ $QUIET -eq 1 ]; then
+	    return
+	fi
+
 	if [[ $REINICIAR != "S" && $REINICIAR != "s" ]]; then
 		return
 	fi
@@ -128,6 +183,7 @@ iniciandoNextcloud() {
 
 function main() {
 
+	processaParametros "$@"
 	recuperaUltimaURL
 	verificaSePrecisaAtualizar
 	verificaSeDeveReiniciar

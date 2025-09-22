@@ -3,6 +3,43 @@
 source "$(realpath $(dirname $0))/../utilitarios/logs"
 
 PM=""
+QUIET=0
+
+exibirModoUsar() {
+	cat <<EOF
+Uso: $0 [OPÇÕES]
+
+Opções:
+  -q             Quiet, desativa interações
+  -h, --help     Mostra esta ajuda
+
+Exemplo: $0 -q
+EOF
+}
+
+processaParametros() {
+	if [ "$#" -eq 0 ]; then
+		QUIET=0
+	else
+		while [ "$#" -gt 0 ]; do
+			case "$1" in
+				-q)
+					QUIET=1
+					shift
+					;;
+				-h|--help)
+					exibirModoUsar "$@"
+					exit 0
+					;;
+				*)
+					echo "Opção desconhecida: $1" >&2
+					exibirModoUsar "$@"
+					exit 1
+					;;
+			esac
+		done
+	fi
+}
 
 detectarGerenciadorPacote() {
 	# Detectar gerenciador de pacotes
@@ -105,21 +142,32 @@ rodarOutrosComandosAtualizar() {
 		info "Encontrados ${#cmds_found[@]} comando(s). Executando na ordem encontrada:"
 		for c in "${cmds_found[@]}"; do
 			info "Executando: $c"
+
 			# executa e registra o resultado, mas não interrompe o script caso falhe
-			if ! rodarComando "$c"; then
-				warn "Comando '$c' falhou — seguindo para o próximo."
+			if [ $QUIET -eq 1 ]; then
+			    if ! rodarComando "$c" "-q"; then
+					warn "Comando '$c' falhou — seguindo para o próximo."
+				fi
+			else
+			    if ! rodarComando "$c"; then
+					warn "Comando '$c' falhou — seguindo para o próximo."
+				fi
 			fi
+
+
 		done
 	fi
 }
 
 main() {
+
+	processaParametros "$@"
 	detectarGerenciadorPacote
 	atualizarPacotesSO
 	atualizarFlatpak
 	rodarOutrosComandosAtualizar
 }
 
-main
+main "$@"
 sucesso "Comando finalizado"
 exit 0

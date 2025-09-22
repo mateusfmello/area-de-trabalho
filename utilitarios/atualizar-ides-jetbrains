@@ -17,7 +17,7 @@ exibirModoUsar() {
 Uso: $0 [OPÇÕES]
 
 Opções:
-  --phpstorm    Atualiza PhpStorm
+  --phpstorm     Atualiza PHPStorm
   --goland       Atualiza GoLand
   --webstorm     Atualiza WebStorm
   --datagrip     Atualiza DataGrip

@@ -10,6 +10,45 @@ DEST_IMG="$DEST_DIR/winbox.png"
 VERSION_FILE="$DEST_DIR/version.txt"
 URL=""
 TMP_ZIP=""
+QUIET=0
+
+source "$(realpath $(dirname $0))/../utilitarios/logs"
+
+exibirModoUsar() {
+	cat <<EOF
+Uso: $0 [OPÇÕES]
+
+Opções:
+  -q             Quiet, desativa interações
+  -h, --help     Mostra esta ajuda
+
+Exemplo: $0 -q
+EOF
+}
+
+processaParametros() {
+	if [ "$#" -eq 0 ]; then
+		QUIET=0
+	else
+		while [ "$#" -gt 0 ]; do
+			case "$1" in
+				-q)
+					QUIET=1
+					shift
+					;;
+				-h|--help)
+					exibirModoUsar "$@"
+					exit 0
+					;;
+				*)
+					echo "Opção desconhecida: $1" >&2
+					exibirModoUsar "$@"
+					exit 1
+					;;
+			esac
+		done
+	fi
+}
 
 criaDiretorioInstalacao() {
 	# Garante que o diretório de instalação exista e esteja no dono correto
@@ -45,6 +84,11 @@ verificaVersaoAtual() {
 }
 
 alertaDaReinicializacao() {
+
+	if [ $QUIET -eq 1 ]; then
+	    return
+	fi
+
 	local REINICIAR
 
 	read -rp "As instâncias do WinBox será ENCERRADA, deseja continuar? [S/n] " REINICIAR
@@ -55,6 +99,11 @@ alertaDaReinicializacao() {
 }
 
 encerrarInstanciasAbertas() {
+
+	if [ $QUIET -eq 1 ]; then
+	    return
+	fi
+
 	# 4) Mata processos antigos (se houver)
 	echo "Encerrando instâncias antigas…"
 	sudo pkill -f "$DEST_BIN" || true
@@ -119,6 +168,7 @@ EOF
 
 main() {
 
+	processaParametros "$@"
 	criaDiretorioInstalacao
 	recuperaURLWinbox
 	verificaVersaoAtual

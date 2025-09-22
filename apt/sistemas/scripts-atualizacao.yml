@@ -42,7 +42,7 @@
         args:
             executable: /bin/bash
 
-#      - name: Rodando scripts de atualização para instalar programas
-#        ansible.builtin.command: "{{ path_dir }}/atualizar"
+      - name: Rodando scripts de atualização para instalar programas
+        ansible.builtin.command: "{{ path_dir }}/atualizar"
 
         
