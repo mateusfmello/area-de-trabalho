@@ -9,8 +9,9 @@ DEST="/opt/Nextcloud.AppImage"
 VERSION_FILE="/opt/Nextcloud.AppImage.version"
 URL=""
 REINICIAR="s"
-
 QUIET=0
+
+source "$(realpath $(dirname $0))/../utilitarios/logs"
 
 exibirModoUsar() {
 	cat <<EOF
@@ -181,6 +182,27 @@ iniciandoNextcloud() {
 	nohup "$DEST" >/dev/null 2>&1 &
 }
 
+criaPontoDesktop() {
+
+	local arquivoDesktop
+	arquivoDesktop="/usr/share/applications/Nextcloud.desktop"
+
+	info "Criando arquivo .desktop para execução do programa"
+	cat << EOF | sudo tee "$arquivoDesktop"
+[Desktop Entry]
+Name=Nextcloud
+Comment=Drive de arquivos
+GenericName=Armazenamento de arquivos
+Exec=$DEST %u
+TryExec=$DEST %u
+Icon=/home/{{ usuario_sistema }}/Imagens/Ícones/nextcloud.svg
+Terminal=false
+Type=Application
+Categories=Network;FileTransfer;
+StartupNotify=true
+EOF
+}
+
 function main() {
 
 	processaParametros "$@"
@@ -191,6 +213,7 @@ function main() {
 	baixarNovoNextcloud
 	atualizarPermissoes
 	instalandoNextcloud
+	criaPontoDesktop
 	aguardarEncerramentoNextcloud
 	iniciandoNextcloud
 
