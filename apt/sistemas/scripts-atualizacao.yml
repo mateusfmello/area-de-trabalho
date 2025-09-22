@@ -37,7 +37,7 @@
                 fi
 
       - name: Rodando scripts de atualização para instalar programas
-        ansible.builtin.shell: "source /etc/profile.d/config-desktop.sh && {{ path_dir }}/atualizar"
+        ansible.builtin.shell: "source /etc/profile.d/config-desktop.sh && {{ path_dir }}/atualizar -q"
         args:
             executable: /bin/bash
 
