@@ -15,3 +15,11 @@
         -   name: Exibindo arquivos ocultos no Nemo
             ansible.builtin.command: |
                 gsettings set org.nemo.preferences show-hidden-files true
+
+        -   name: Bloqueio imediato ao iniciar proteção de tela
+            ansible.builtin.command: |
+                gsettings set org.cinnamon.desktop.screensaver lock-enabled true
+
+        -   name: Iniciando protetor de tela após 5 minutos de inatividade
+            ansible.builtin.command: |
+                gsettings set org.cinnamon.desktop.session idle-delay 300
