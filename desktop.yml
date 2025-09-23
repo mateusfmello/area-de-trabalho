@@ -15,6 +15,7 @@
 -   import_playbook: ./apt/sistemas/spotify.yml
 -   import_playbook: ./apt/sistemas/sublime-text.yml
 -   import_playbook: ./apt/sistemas/virtual-box.yml
+-   import_playbook: ./apt/sistemas/whimsical.yml
 -   import_playbook: ./cinnamon/configuracao.yml
 -   import_playbook: ./cinnamon/data-hora.yml
 -   import_playbook: ./cinnamon/barra-tarefas.yml
