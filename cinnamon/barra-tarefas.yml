@@ -2,7 +2,6 @@
 -   name: Configurando a barra de tarefas
     hosts: localhost
     gather_facts: no
-    become: true
 
     vars:
         json_file: "/home/{{ usuario_sistema }}/.config/cinnamon/spices/grouped-window-list@cinnamon.org/2.json"
@@ -36,6 +35,7 @@
                 gsettings set org.cinnamon panel-zone-icon-sizes '[{"panelId": 1, "left": 22, "center": 0, "right": 18}]'
 
         -   name: Verifica se o arquivo existe
+            become: true
             ansible.builtin.stat:
                 path: "{{ json_file }}"
             register: file_stat
@@ -46,11 +46,13 @@
             when: not file_stat.stat.exists
 
         -   name: Verifica se o arquivo de backup existe
+            become: true
             ansible.builtin.stat:
                 path: "{{ json_file }}{{ backup_suffix }}"
             register: app_file_backup
 
         -   name: Fazer backup do {{ json_file }} (apenas se ainda não existir backup)
+            become: true
             ansible.builtin.copy:
                 src: "{{ json_file }}"
                 dest: "{{ json_file }}{{ backup_suffix }}"
@@ -64,6 +66,7 @@
             ignore_errors: yes
 
         -   name: Ler arquivo JSON
+            become: true
             slurp:
                 src: "{{ json_file }}"
             register: json_raw
@@ -102,6 +105,7 @@
                     }}
 
         -   name: Escrever de volta o JSON atualizado
+            become: true
             ansible.builtin.copy:
                 content: "{{ json_obj | to_nice_json }}"
                 dest: "{{ json_file }}"
