@@ -6,8 +6,8 @@
 
     vars:
         applet_file: "/home/{{ usuario_sistema }}/.config/cinnamon/spices/calendar@cinnamon.org/13.json"
-        custom_format: "%a, %e/%m %b, %H:%M:%S"
-        custom_tooltip_format: "%A, %e/%m/%Y, %B, %H:%M:%S"
+        custom_format: "%a, %d/%m %b, %H:%M:%S"
+        custom_tooltip_format: "%A, %d/%m/%Y, %B, %H:%M:%S"
         backup_suffix: ".ansible.bkp"
 
     tasks:
