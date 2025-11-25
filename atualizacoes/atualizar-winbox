@@ -3,7 +3,7 @@
 
 # Globais:
 # ========== Configurações ==========
-DOWNLOAD_PAGE="https://mikrotik.com/download"
+DOWNLOAD_PAGE="https://mikrotik.com/download/winbox"
 DEST_DIR="/opt/winbox"
 DEST_BIN="$DEST_DIR/WinBox"
 DEST_IMG="$DEST_DIR/winbox.png"
@@ -64,9 +64,9 @@ recuperaURLWinbox() {
 
 	# 2) Extrai a URL do ZIP Linux (64‑bit)
 	URL=$(printf "%s\n" "$HTML" \
-	  | grep -A1 'Linux (64-bit)' \
-	  | grep -oP 'href="\K[^"]+' \
-	  | head -n1)
+			| grep -A1 'WinBox_Linux' \
+			| grep -oP 'href="\K[^"]+' \
+			| grep -P '\.zip$')
 
 	if [[ -z "$URL" ]]; then
 		echo "ERRO: não consegui extrair a URL do WinBox Linux." >&2
