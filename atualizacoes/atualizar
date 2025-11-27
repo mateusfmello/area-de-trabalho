@@ -128,6 +128,12 @@ rodarOutrosComandosAtualizar() {
 				continue
 			fi
 
+			# pular se for o arquivo específico
+			if [ "$name" = "atualizar-biblioteca-area-de-trabalho" ]; then
+				msg "Pulando arquivo: $f"
+				continue
+			fi
+
 			seen_name[$name]=1
 			cmds_found+=("$f")
 		done
@@ -160,8 +166,8 @@ rodarOutrosComandosAtualizar() {
 }
 
 main() {
-
 	processaParametros "$@"
+	atualizar-biblioteca-area-de-trabalho
 	detectarGerenciadorPacote
 	atualizarPacotesSO
 	atualizarFlatpak
