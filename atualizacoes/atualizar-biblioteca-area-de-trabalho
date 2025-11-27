@@ -1,0 +1,48 @@
+#!/bin/bash
+# Atualiza a bíblioteca Área de Trabalho
+
+source "$(realpath $(dirname $0))/../utilitarios/logs"
+
+exibirModoUsar() {
+	cat <<EOF
+Uso: $0 [OPÇÕES]
+
+Opções:
+  -h, --help     Mostra esta ajuda
+
+Exemplo: $0 -q
+EOF
+}
+
+processaParametros() {
+	if [ "$#" -eq 0 ]; then
+		QUIET=0
+	else
+		while [ "$#" -gt 0 ]; do
+			case "$1" in
+				-h|--help)
+					exibirModoUsar "$@"
+					exit 0
+					;;
+				*)
+					echo "Opção desconhecida: $1" >&2
+					exibirModoUsar "$@"
+					exit 1
+					;;
+			esac
+		done
+	fi
+}
+
+main() {
+
+	processaParametros "$@"
+
+	rodarComando cd /opt/config-desktop
+	rodarComando git restore .
+	rodarComando git pull
+
+	echo "Atualização concluída!"
+}
+
+main "$@";
