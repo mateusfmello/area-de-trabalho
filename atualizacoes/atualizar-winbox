@@ -66,7 +66,7 @@ recuperaURLWinbox() {
 	URL=$(printf "%s\n" "$HTML" \
 			| grep -A1 'WinBox_Linux' \
 			| grep -oP 'href="\K[^"]+' \
-			| grep -P '\.zip$')
+			| grep -m 1 -P '\.zip$')
 
 	if [[ -z "$URL" ]]; then
 		echo "ERRO: não consegui extrair a URL do WinBox Linux." >&2
